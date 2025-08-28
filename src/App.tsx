@@ -1,56 +1,45 @@
 import { useState } from 'react'
-import { KYCProvider } from './contexts/KYCContext'
-import { WelcomeScreen } from './components/WelcomeScreen'
-import { UserInfoStep } from './components/steps/UserInfoStep'
-import { MobileOTPStep } from './components/steps/MobileOTPStep'
-import { PANVerificationStep } from './components/steps/PANVerificationStep'
-import { AadhaarStep } from './components/steps/AadhaarStep'
-import { LivenessStep } from './components/steps/LivenessStep'
-import { ReviewStep } from './components/steps/ReviewStep'
-import { StepperNavigation } from './components/StepperNavigation'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { KYCProvider } from './contexts/KYCAdminContext'
+import { Sidebar } from './components/layout/Sidebar'
+import { Header } from './components/layout/Header'
+import { KYCLevelsPage } from './pages/KYCLevelsPage'
+import { KYCDetailsPage } from './pages/KYCDetailsPage'
+import { UsersPage } from './pages/UsersPage'
+import { UserKYCLevelsPage } from './pages/UserKYCLevelsPage'
+import { UserKYCDetailsPage } from './pages/UserKYCDetailsPage'
+import { UserKYCUpdatesPage } from './pages/UserKYCUpdatesPage'
+import { DashboardPage } from './pages/DashboardPage'
 
 function App() {
-  const [currentStep, setCurrentStep] = useState(0)
-  const [kycStarted, setKycStarted] = useState(false)
-
-  const handleStartKYC = () => {
-    setKycStarted(true)
-    setCurrentStep(1)
-  }
-
-  const handleStepChange = (step: number) => {
-    setCurrentStep(step)
-  }
-
-  const renderCurrentStep = () => {
-    switch (currentStep) {
-      case 1:
-        return <UserInfoStep onNext={() => handleStepChange(2)} />
-      case 2:
-        return <MobileOTPStep onNext={() => handleStepChange(3)} onBack={() => handleStepChange(1)} />
-      case 3:
-        return <PANVerificationStep onNext={() => handleStepChange(4)} onBack={() => handleStepChange(2)} />
-      case 4:
-        return <AadhaarStep onNext={() => handleStepChange(5)} onBack={() => handleStepChange(3)} />
-      case 5:
-        return <LivenessStep onNext={() => handleStepChange(6)} onBack={() => handleStepChange(4)} />
-      case 6:
-        return <ReviewStep onBack={() => handleStepChange(5)} />
-      default:
-        return <WelcomeScreen onStartKYC={handleStartKYC} />
-    }
-  }
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
     <KYCProvider>
-      <div className="min-h-screen bg-neutral-200 dark:bg-neutral-800">
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
-          {kycStarted && currentStep > 0 && (
-            <StepperNavigation currentStep={currentStep} totalSteps={6} />
-          )}
-          {renderCurrentStep()}
+      <Router>
+        <div className="min-h-screen bg-neutral-200">
+          <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+          
+          <div className="lg:pl-64">
+            <Header onMenuClick={() => setSidebarOpen(true)} />
+            
+            <main className="py-6">
+              <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <Routes>
+                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/kyc-levels" element={<KYCLevelsPage />} />
+                  <Route path="/kyc-details" element={<KYCDetailsPage />} />
+                  <Route path="/users" element={<UsersPage />} />
+                  <Route path="/user-kyc-levels" element={<UserKYCLevelsPage />} />
+                  <Route path="/user-kyc-details" element={<UserKYCDetailsPage />} />
+                  <Route path="/user-kyc-updates" element={<UserKYCUpdatesPage />} />
+                </Routes>
+              </div>
+            </main>
+          </div>
         </div>
-      </div>
+      </Router>
     </KYCProvider>
   )
 }

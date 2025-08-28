@@ -1,4 +1,4 @@
-import { Bars3Icon } from '@heroicons/react/24/outline'
+import { Menu } from 'lucide-react'
 import { Button } from '../ui/button'
 
 interface HeaderProps {
@@ -15,7 +15,7 @@ export function Header({ onMenuClick }: HeaderProps) {
         onClick={onMenuClick}
       >
         <span className="sr-only">Open sidebar</span>
-        <Bars3Icon className="h-6 w-6" aria-hidden="true" />
+        <Menu className="h-6 w-6" aria-hidden="true" />
       </Button>
 
       <div className="h-6 w-px bg-neutral-200 lg:hidden" aria-hidden="true" />

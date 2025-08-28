@@ -4,7 +4,7 @@ import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Badge } from '../components/ui/badge'
 import { useKYCAdmin, KYCLevel, KYCStatus, TimeUnit } from '../contexts/KYCAdminContext'
-import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { KYCLevelModal } from '../components/modals/KYCLevelModal'
 
 export function KYCLevelsPage() {
@@ -110,7 +110,7 @@ export function KYCLevelsPage() {
           </p>
         </div>
         <Button onClick={handleCreate} className="gap-2">
-          <PlusIcon className="h-4 w-4" />
+          <Plus className="h-4 w-4" />
           Add KYC Level
         </Button>
       </div>
@@ -157,10 +157,10 @@ export function KYCLevelsPage() {
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={() => handleEdit(level)}>
-                    <PencilIcon className="h-4 w-4" />
+                    <Pencil className="h-4 w-4" />
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => handleDelete(level.id)}>
-                    <TrashIcon className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>

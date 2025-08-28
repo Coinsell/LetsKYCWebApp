@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
 import { useKYCAdmin, KYCStatus } from '../contexts/KYCAdminContext'
-import { ShieldCheckIcon, DocumentTextIcon, UsersIcon, ClipboardDocumentListIcon } from '@heroicons/react/24/outline'
+import { ShieldCheck, FileText, Users, ClipboardList } from 'lucide-react'
 
 export function DashboardPage() {
   const { state } = useKYCAdmin()
@@ -11,28 +11,28 @@ export function DashboardPage() {
     {
       name: 'KYC Levels',
       value: state.kycLevels.length,
-      icon: ShieldCheckIcon,
+      icon: ShieldCheck,
       color: 'text-blue-600',
       bgColor: 'bg-blue-100'
     },
     {
       name: 'KYC Details',
       value: state.kycDetails.length,
-      icon: DocumentTextIcon,
+      icon: FileText,
       color: 'text-green-600',
       bgColor: 'bg-green-100'
     },
     {
       name: 'Total Users',
       value: state.users.length,
-      icon: UsersIcon,
+      icon: Users,
       color: 'text-purple-600',
       bgColor: 'bg-purple-100'
     },
     {
       name: 'User KYC Details',
       value: state.userKycDetails.length,
-      icon: ClipboardDocumentListIcon,
+      icon: ClipboardList,
       color: 'text-orange-600',
       bgColor: 'bg-orange-100'
     }

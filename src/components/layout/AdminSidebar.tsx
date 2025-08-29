@@ -4,6 +4,7 @@ import {
   ShieldCheck,
   Users,
   UserCheck,
+  Settings,
   ChevronLeft,
   ChevronRight,
   FileText,
@@ -118,6 +119,19 @@ export function AdminSidebar({
             <SidebarItem key={item.name} item={item} collapsed={collapsed} />
           ))}
         </nav>
+
+        {/* Footer */}
+        <div className="border-t border-neutral-200 dark:border-neutral-800 p-4">
+          <div
+            className={cn(
+              "flex items-center gap-3 text-sm text-neutral-600 dark:text-neutral-400",
+              collapsed && "justify-center"
+            )}
+          >
+            <Settings className="h-4 w-4" />
+            {!collapsed && <span>Admin Panel</span>}
+          </div>
+        </div>
       </div>
 
       {/* Mobile Sidebar (Slide-over) */}
@@ -138,6 +152,19 @@ export function AdminSidebar({
                 <SidebarItem key={item.name} item={item} collapsed={false} />
               ))}
             </nav>
+
+            {/* Footer */}
+            <div className="border-t border-neutral-200 dark:border-neutral-800 p-4">
+              <div
+                className={cn(
+                  "flex items-center gap-3 text-sm text-neutral-600 dark:text-neutral-400",
+                  collapsed && "justify-center"
+                )}
+              >
+                <Settings className="h-4 w-4" />
+                {!collapsed && <span>Admin Panel</span>}
+              </div>
+            </div>
           </div>
 
           {/* Backdrop */}

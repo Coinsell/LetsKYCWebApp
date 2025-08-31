@@ -6,7 +6,7 @@ import {
   useEffect,
 } from "react";
 
-export interface AuthUser {
+export interface User {
   id: string;
   email: string;
   firstName: string;
@@ -20,19 +20,19 @@ export interface AuthUser {
 }
 
 interface AuthState {
-  authUser: AuthUser | null;
+  user: User | null;
   isLoading: boolean;
   error: string | null;
 }
 
 type AuthAction =
   | { type: "SET_LOADING"; payload: boolean }
-  | { type: "SET_AUTHUSER"; payload: AuthUser | null }
+  | { type: "SET_USER"; payload: User | null }
   | { type: "SET_ERROR"; payload: string | null }
   | { type: "LOGOUT" };
 
 const initialState: AuthState = {
-  authUser: null,
+  user: null,
   isLoading: true,
   error: null,
 };
@@ -41,17 +41,12 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
   switch (action.type) {
     case "SET_LOADING":
       return { ...state, isLoading: action.payload };
-    case "SET_AUTHUSER":
-      return {
-        ...state,
-        authUser: action.payload,
-        isLoading: false,
-        error: null,
-      };
+    case "SET_USER":
+      return { ...state, user: action.payload, isLoading: false, error: null };
     case "SET_ERROR":
       return { ...state, error: action.payload, isLoading: false };
     case "LOGOUT":
-      return { ...state, authUser: null, isLoading: false, error: null };
+      return { ...state, user: null, isLoading: false, error: null };
     default:
       return state;
   }
@@ -62,7 +57,7 @@ const AuthContext = createContext<{
   dispatch: React.Dispatch<AuthAction>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
-  authUser: AuthUser | null;
+  user: User | null;
   isLoading: boolean;
 } | null>(null);
 
@@ -74,10 +69,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const checkAuth = async () => {
       try {
         // In real app, check for existing token/session
-        const savedUser = localStorage.getItem("authUser");
+        const savedUser = localStorage.getItem("user");
         if (savedUser) {
-          const authUser = JSON.parse(savedUser);
-          dispatch({ type: "SET_AUTHUSER", payload: authUser });
+          const user = JSON.parse(savedUser);
+          dispatch({ type: "SET_USER", payload: user });
         } else {
           dispatch({ type: "SET_LOADING", payload: false });
         }
@@ -99,7 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Mock user data based on email
-      const mockUser: AuthUser = {
+      const mockUser: User = {
         id: "1",
         email,
         firstName: email.includes("admin") ? "Admin" : "John",
@@ -112,15 +107,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       };
 
-      localStorage.setItem("authUser", JSON.stringify(mockUser));
-      dispatch({ type: "SET_AUTHUSER", payload: mockUser });
+      localStorage.setItem("user", JSON.stringify(mockUser));
+      dispatch({ type: "SET_USER", payload: mockUser });
     } catch (error) {
       dispatch({ type: "SET_ERROR", payload: "Login failed" });
     }
   };
 
   const logout = () => {
-    localStorage.removeItem("authUser");
+    localStorage.removeItem("user");
     dispatch({ type: "LOGOUT" });
   };
 
@@ -131,7 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         dispatch,
         login,
         logout,
-        authUser: state.authUser,
+        user: state.user,
         isLoading: state.isLoading,
       }}
     >

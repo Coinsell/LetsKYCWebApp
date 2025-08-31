@@ -20,7 +20,7 @@ const navigation = [
 
 export function UserHeader() {
   const { theme, toggleTheme } = useTheme();
-  const { authUser, logout } = useAuth();
+  const { user, logout } = useAuth();
   const location = useLocation();
 
   return (
@@ -69,13 +69,10 @@ export function UserHeader() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                 <Avatar className="h-9 w-9">
-                  <AvatarImage
-                    src={authUser?.avatar}
-                    alt={authUser?.firstName}
-                  />
+                  <AvatarImage src={user?.avatar} alt={user?.firstName} />
                   <AvatarFallback>
-                    {authUser?.firstName?.[0]}
-                    {authUser?.lastName?.[0]}
+                    {user?.firstName?.[0]}
+                    {user?.lastName?.[0]}
                   </AvatarFallback>
                 </Avatar>
               </Button>
@@ -84,10 +81,10 @@ export function UserHeader() {
               <div className="flex items-center justify-start gap-2 p-2">
                 <div className="flex flex-col space-y-1 leading-none">
                   <p className="font-medium">
-                    {authUser?.firstName} {authUser?.lastName}
+                    {user?.firstName} {user?.lastName}
                   </p>
                   <p className="w-[200px] truncate text-sm text-muted-foreground">
-                    {authUser?.email}
+                    {user?.email}
                   </p>
                 </div>
               </div>

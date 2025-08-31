@@ -11,7 +11,9 @@ import { Input } from "../ui/input";
 import { useKYC, UserInfo } from "../../contexts/KYCContext";
 
 import { api } from "../../lib/api";
-import { AuthUser } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { mapFormDataToUser } from "@/utils/mappers/mapFormDataToUser";
+import { User } from "@/contexts/KYCAdminContext";
 
 interface UserInfoStepProps {
   onNext: () => void;
@@ -19,6 +21,7 @@ interface UserInfoStepProps {
 
 export function UserInfoStep({ onNext }: UserInfoStepProps) {
   const { dispatch } = useKYC();
+  const { user: authUser } = useAuth();
   const [formData, setFormData] = useState<UserInfo>({
     fullName: "",
     dateOfBirth: "",
@@ -70,48 +73,29 @@ export function UserInfoStep({ onNext }: UserInfoStepProps) {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    console.log("Inside handle submit");
     e.preventDefault();
-
-    console.log("After prevent default");
 
     if (!validateForm()) return;
 
-    console.log("Is a valid form");
-
-    // try {
-    //   // Simulate API call
-    //   const response = await fetch("/api/kyc/user-info", {
-    //     method: "POST",
-    //     headers: { "Content-Type": "application/json" },
-    //     body: JSON.stringify(formData),
-    //   });
-
-    //   if (response.ok) {
-    //     const data = await response.json();
-    //     dispatch({ type: "SET_KYC_ID", payload: data.kycId });
-    //     dispatch({ type: "SET_USER_INFO", payload: formData });
-    //     onNext();
-    //   }
-    // } catch (error) {
-    //   // For demo purposes, proceed anyway
-    //   dispatch({ type: "SET_USER_INFO", payload: formData });
-    //   onNext();
-    // }
-
     try {
+      const mappedUser = mapFormDataToUser(formData, authUser);
       const result = await api.post<{ user: UserInfo }>(
-        `$"/users/users/{formData}"`,
-        formData
+        `/users/users/${mappedUser.id}`,
+        mappedUser
       );
+
       if (result) {
+        // Update KYC context (your form flow)
         dispatch({ type: "SET_USER_INFO", payload: formData });
+
+        // Update KYCAdmin context (admin state)
+        //adminDispatch({ type: "ADD_USER", payload: result });
+
         onNext();
       }
     } catch (err) {
       console.error("API error:", err);
     }
-
     console.log("After OnNext");
     console.log("Form Data: " + formData);
   };

@@ -28,13 +28,13 @@ import {
 import { Pencil, Save, X, Settings, Bell, Shield, User } from "lucide-react";
 
 export function AdminProfilePage() {
-  const { authUser } = useAuth();
+  const { user } = useAuth();
   const { theme, setTheme } = useTheme();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    firstName: authUser?.firstName || "",
-    lastName: authUser?.lastName || "",
-    email: authUser?.email || "",
+    firstName: user?.firstName || "",
+    lastName: user?.lastName || "",
+    email: user?.email || "",
   });
   const [notifications, setNotifications] = useState({
     emailNotifications: true,
@@ -50,9 +50,9 @@ export function AdminProfilePage() {
 
   const handleCancel = () => {
     setFormData({
-      firstName: authUser?.firstName || "",
-      lastName: authUser?.lastName || "",
-      email: authUser?.email || "",
+      firstName: user?.firstName || "",
+      lastName: user?.lastName || "",
+      email: user?.email || "",
     });
     setIsEditing(false);
   };
@@ -102,21 +102,21 @@ export function AdminProfilePage() {
           <CardContent className="space-y-6">
             <div className="flex items-center gap-4 mb-6">
               <Avatar className="h-20 w-20">
-                <AvatarImage src={authUser?.avatar} alt={authUser?.firstName} />
+                <AvatarImage src={user?.avatar} alt={user?.firstName} />
                 <AvatarFallback className="text-lg">
-                  {authUser?.firstName?.[0]}
-                  {authUser?.lastName?.[0]}
+                  {user?.firstName?.[0]}
+                  {user?.lastName?.[0]}
                 </AvatarFallback>
               </Avatar>
               <div>
                 <h3 className="text-lg font-semibold">
-                  {authUser?.firstName} {authUser?.lastName}
+                  {user?.firstName} {user?.lastName}
                 </h3>
                 <p className="text-neutral-600 dark:text-neutral-400">
-                  {authUser?.email}
+                  {user?.email}
                 </p>
                 <div className="flex gap-2 mt-2">
-                  {authUser?.roles?.map((role) => (
+                  {user?.roles?.map((role) => (
                     <Badge key={role} variant="outline" className="text-xs">
                       {role}
                     </Badge>

@@ -14,20 +14,19 @@ import { LoginPage } from "./pages/auth/LoginPage";
 import { LoadingSpinner } from "./components/ui/loading-spinner";
 
 function AppContent() {
-  const { authUser, isLoading } = useAuth();
+  const { user, isLoading } = useAuth();
 
   if (isLoading) {
     return <LoadingSpinner />;
   }
 
-  if (!authUser) {
+  if (!user) {
     return <LoginPage />;
   }
 
   // Determine if user is admin based on roles
   const isAdmin =
-    authUser.roles?.includes("admin") ||
-    authUser.roles?.includes("administrator");
+    user.roles?.includes("admin") || user.roles?.includes("administrator");
 
   return (
     <KYCProvider>{isAdmin ? <AdminLayout /> : <UserLayout />}</KYCProvider>

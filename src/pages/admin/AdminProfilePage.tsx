@@ -1,45 +1,61 @@
-import { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
-import { Button } from '../../components/ui/button'
-import { Input } from '../../components/ui/input'
-import { Label } from '../../components/ui/label'
-import { Badge } from '../../components/ui/badge'
-import { Switch } from '../../components/ui/switch'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
-import { useAuth } from '../../contexts/AuthContext'
-import { useTheme } from '../../contexts/ThemeContext'
-import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar'
-import { Pencil, Save, X, Settings, Bell, Shield, User } from 'lucide-react'
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Label } from "../../components/ui/label";
+import { Badge } from "../../components/ui/badge";
+import { Switch } from "../../components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../components/ui/select";
+import { useAuth } from "../../contexts/AuthContext";
+import { useTheme } from "../../contexts/ThemeContext";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "../../components/ui/avatar";
+import { Pencil, Save, X, Settings, Bell, Shield, User } from "lucide-react";
 
 export function AdminProfilePage() {
-  const { user } = useAuth()
-  const { theme, setTheme } = useTheme()
-  const [isEditing, setIsEditing] = useState(false)
+  const { authUser } = useAuth();
+  const { theme, setTheme } = useTheme();
+  const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
-    email: user?.email || ''
-  })
+    firstName: authUser?.firstName || "",
+    lastName: authUser?.lastName || "",
+    email: authUser?.email || "",
+  });
   const [notifications, setNotifications] = useState({
     emailNotifications: true,
     kycAlerts: true,
     systemUpdates: false,
-    weeklyReports: true
-  })
+    weeklyReports: true,
+  });
 
   const handleSave = () => {
     // Save profile changes
-    setIsEditing(false)
-  }
+    setIsEditing(false);
+  };
 
   const handleCancel = () => {
     setFormData({
-      firstName: user?.firstName || '',
-      lastName: user?.lastName || '',
-      email: user?.email || ''
-    })
-    setIsEditing(false)
-  }
+      firstName: authUser?.firstName || "",
+      lastName: authUser?.lastName || "",
+      email: authUser?.email || "",
+    });
+    setIsEditing(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -86,18 +102,21 @@ export function AdminProfilePage() {
           <CardContent className="space-y-6">
             <div className="flex items-center gap-4 mb-6">
               <Avatar className="h-20 w-20">
-                <AvatarImage src={user?.avatar} alt={user?.firstName} />
+                <AvatarImage src={authUser?.avatar} alt={authUser?.firstName} />
                 <AvatarFallback className="text-lg">
-                  {user?.firstName?.[0]}{user?.lastName?.[0]}
+                  {authUser?.firstName?.[0]}
+                  {authUser?.lastName?.[0]}
                 </AvatarFallback>
               </Avatar>
               <div>
                 <h3 className="text-lg font-semibold">
-                  {user?.firstName} {user?.lastName}
+                  {authUser?.firstName} {authUser?.lastName}
                 </h3>
-                <p className="text-neutral-600 dark:text-neutral-400">{user?.email}</p>
+                <p className="text-neutral-600 dark:text-neutral-400">
+                  {authUser?.email}
+                </p>
                 <div className="flex gap-2 mt-2">
-                  {user?.roles?.map((role) => (
+                  {authUser?.roles?.map((role) => (
                     <Badge key={role} variant="outline" className="text-xs">
                       {role}
                     </Badge>
@@ -112,7 +131,9 @@ export function AdminProfilePage() {
                 <Input
                   id="firstName"
                   value={formData.firstName}
-                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, firstName: e.target.value })
+                  }
                   disabled={!isEditing}
                 />
               </div>
@@ -122,7 +143,9 @@ export function AdminProfilePage() {
                 <Input
                   id="lastName"
                   value={formData.lastName}
-                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, lastName: e.target.value })
+                  }
                   disabled={!isEditing}
                 />
               </div>
@@ -133,7 +156,9 @@ export function AdminProfilePage() {
                   id="email"
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
                   disabled={!isEditing}
                 />
               </div>
@@ -190,7 +215,10 @@ export function AdminProfilePage() {
                     Choose your preferred theme
                   </p>
                 </div>
-                <Select value={theme} onValueChange={(value: 'light' | 'dark') => setTheme(value)}>
+                <Select
+                  value={theme}
+                  onValueChange={(value: "light" | "dark") => setTheme(value)}
+                >
                   <SelectTrigger className="w-32">
                     <SelectValue />
                   </SelectTrigger>
@@ -230,13 +258,17 @@ export function AdminProfilePage() {
               <Bell className="h-5 w-5" />
               Notifications
             </CardTitle>
-            <CardDescription>Manage your notification preferences</CardDescription>
+            <CardDescription>
+              Manage your notification preferences
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <Label htmlFor="emailNotifications">Email Notifications</Label>
+                  <Label htmlFor="emailNotifications">
+                    Email Notifications
+                  </Label>
                   <p className="text-xs text-neutral-600 dark:text-neutral-400">
                     Receive email updates
                   </p>
@@ -244,8 +276,11 @@ export function AdminProfilePage() {
                 <Switch
                   id="emailNotifications"
                   checked={notifications.emailNotifications}
-                  onCheckedChange={(checked) => 
-                    setNotifications({ ...notifications, emailNotifications: checked })
+                  onCheckedChange={(checked) =>
+                    setNotifications({
+                      ...notifications,
+                      emailNotifications: checked,
+                    })
                   }
                 />
               </div>
@@ -260,7 +295,7 @@ export function AdminProfilePage() {
                 <Switch
                   id="kycAlerts"
                   checked={notifications.kycAlerts}
-                  onCheckedChange={(checked) => 
+                  onCheckedChange={(checked) =>
                     setNotifications({ ...notifications, kycAlerts: checked })
                   }
                 />
@@ -276,8 +311,11 @@ export function AdminProfilePage() {
                 <Switch
                   id="systemUpdates"
                   checked={notifications.systemUpdates}
-                  onCheckedChange={(checked) => 
-                    setNotifications({ ...notifications, systemUpdates: checked })
+                  onCheckedChange={(checked) =>
+                    setNotifications({
+                      ...notifications,
+                      systemUpdates: checked,
+                    })
                   }
                 />
               </div>
@@ -292,8 +330,11 @@ export function AdminProfilePage() {
                 <Switch
                   id="weeklyReports"
                   checked={notifications.weeklyReports}
-                  onCheckedChange={(checked) => 
-                    setNotifications({ ...notifications, weeklyReports: checked })
+                  onCheckedChange={(checked) =>
+                    setNotifications({
+                      ...notifications,
+                      weeklyReports: checked,
+                    })
                   }
                 />
               </div>
@@ -302,5 +343,5 @@ export function AdminProfilePage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

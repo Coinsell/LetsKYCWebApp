@@ -42,7 +42,6 @@ export function AdminSidebar({
 }: AdminSidebarProps) {
   const location = useLocation();
 
-  // ✅ define props properly
   const SidebarItem = ({
     item,
     collapsed,

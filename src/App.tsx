@@ -1,32 +1,37 @@
-import { useState, useEffect } from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider, useAuth } from './contexts/AuthContext'
-import { KYCProvider } from './contexts/KYCAdminContext'
-import { ThemeProvider } from './contexts/ThemeContext'
-import { AdminLayout } from './components/layout/AdminLayout'
-import { UserLayout } from './components/layout/UserLayout'
-import { LoginPage } from './pages/auth/LoginPage'
-import { LoadingSpinner } from './components/ui/loading-spinner'
+import { useState, useEffect } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { KYCProvider } from "./contexts/KYCAdminContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
+import { AdminLayout } from "./components/layout/AdminLayout";
+import { UserLayout } from "./components/layout/UserLayout";
+import { LoginPage } from "./pages/auth/LoginPage";
+import { LoadingSpinner } from "./components/ui/loading-spinner";
 
 function AppContent() {
-  const { user, isLoading } = useAuth()
+  const { authUser, isLoading } = useAuth();
 
   if (isLoading) {
-    return <LoadingSpinner />
+    return <LoadingSpinner />;
   }
 
-  if (!user) {
-    return <LoginPage />
+  if (!authUser) {
+    return <LoginPage />;
   }
 
   // Determine if user is admin based on roles
-  const isAdmin = user.roles?.includes('admin') || user.roles?.includes('administrator')
+  const isAdmin =
+    authUser.roles?.includes("admin") ||
+    authUser.roles?.includes("administrator");
 
   return (
-    <KYCProvider>
-      {isAdmin ? <AdminLayout /> : <UserLayout />}
-    </KYCProvider>
-  )
+    <KYCProvider>{isAdmin ? <AdminLayout /> : <UserLayout />}</KYCProvider>
+  );
 }
 
 function App() {
@@ -38,7 +43,7 @@ function App() {
         </Router>
       </AuthProvider>
     </ThemeProvider>
-  )
+  );
 }
 
-export default App
+export default App;

@@ -11,7 +11,7 @@ import { Input } from "../ui/input";
 import { useKYC, UserInfo } from "../../contexts/KYCContext";
 
 import { api } from "../../lib/api";
-import { User } from "@/contexts/AuthContext";
+import { AuthUser } from "@/contexts/AuthContext";
 
 interface UserInfoStepProps {
   onNext: () => void;

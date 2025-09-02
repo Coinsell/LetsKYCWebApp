@@ -1,29 +1,46 @@
-import { useState, useEffect } from 'react'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog'
-import { Button } from '../ui/button'
-import { Input } from '../ui/input'
-import { Label } from '../ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
-import { Textarea } from '../ui/textarea'
-import { KYCLevel, KYCStatus, TimeUnit } from '../../contexts/KYCAdminContext'
+import { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { Textarea } from "../ui/textarea";
+import { KYCLevel, KYCStatus, TimeUnit } from "../../contexts/KYCAdminContext";
 
 interface KYCLevelModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onSave: (level: Partial<KYCLevel>) => void
-  level?: KYCLevel | null
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (level: Partial<KYCLevel>) => void;
+  level?: KYCLevel | null;
 }
 
-export function KYCLevelModal({ isOpen, onClose, onSave, level }: KYCLevelModalProps) {
+export function KYCLevelModal({
+  isOpen,
+  onClose,
+  onSave,
+  level,
+}: KYCLevelModalProps) {
   const [formData, setFormData] = useState({
-    code: '',
-    description: '',
+    code: "",
+    description: "",
     status: KYCStatus.NotSubmitted,
-    maxDepositAmount: '',
-    maxWithdrawalAmount: '',
-    duration: '',
-    timeUnit: TimeUnit.days
-  })
+    maxDepositAmount: "",
+    maxWithdrawalAmount: "",
+    duration: "",
+    timeUnit: TimeUnit.Day,
+  });
 
   useEffect(() => {
     if (level) {
@@ -31,44 +48,52 @@ export function KYCLevelModal({ isOpen, onClose, onSave, level }: KYCLevelModalP
         code: level.code,
         description: level.description,
         status: level.status,
-        maxDepositAmount: level.maxDepositAmount?.toString() || '',
-        maxWithdrawalAmount: level.maxWithdrawalAmount?.toString() || '',
+        maxDepositAmount: level.maxDepositAmount?.toString() || "",
+        maxWithdrawalAmount: level.maxWithdrawalAmount?.toString() || "",
         duration: level.duration.toString(),
-        timeUnit: level.timeUnit
-      })
+        timeUnit: level.timeUnit,
+      });
     } else {
       setFormData({
-        code: '',
-        description: '',
+        code: "",
+        description: "",
         status: KYCStatus.NotSubmitted,
-        maxDepositAmount: '',
-        maxWithdrawalAmount: '',
-        duration: '',
-        timeUnit: TimeUnit.days
-      })
+        maxDepositAmount: "",
+        maxWithdrawalAmount: "",
+        duration: "",
+        timeUnit: TimeUnit.Day,
+      });
     }
-  }, [level, isOpen])
+  }, [level, isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     onSave({
       code: formData.code,
       description: formData.description,
       status: formData.status,
-      maxDepositAmount: formData.maxDepositAmount ? parseFloat(formData.maxDepositAmount) : undefined,
-      maxWithdrawalAmount: formData.maxWithdrawalAmount ? parseFloat(formData.maxWithdrawalAmount) : undefined,
+      maxDepositAmount: formData.maxDepositAmount
+        ? parseFloat(formData.maxDepositAmount)
+        : undefined,
+      maxWithdrawalAmount: formData.maxWithdrawalAmount
+        ? parseFloat(formData.maxWithdrawalAmount)
+        : undefined,
       duration: parseInt(formData.duration),
-      timeUnit: formData.timeUnit
-    })
-  }
+      timeUnit: formData.timeUnit,
+    });
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{level ? 'Edit KYC Level' : 'Create KYC Level'}</DialogTitle>
+          <DialogTitle>
+            {level ? "Edit KYC Level" : "Create KYC Level"}
+          </DialogTitle>
           <DialogDescription>
-            {level ? 'Update the KYC level details.' : 'Create a new KYC level configuration.'}
+            {level
+              ? "Update the KYC level details."
+              : "Create a new KYC level configuration."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -77,7 +102,9 @@ export function KYCLevelModal({ isOpen, onClose, onSave, level }: KYCLevelModalP
             <Input
               id="code"
               value={formData.code}
-              onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, code: e.target.value })
+              }
               placeholder="e.g., BASIC, INTERMEDIATE"
               required
             />
@@ -88,7 +115,9 @@ export function KYCLevelModal({ isOpen, onClose, onSave, level }: KYCLevelModalP
             <Textarea
               id="description"
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
               placeholder="Describe this KYC level..."
               required
             />
@@ -96,7 +125,12 @@ export function KYCLevelModal({ isOpen, onClose, onSave, level }: KYCLevelModalP
 
           <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
-            <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value as KYCStatus })}>
+            <Select
+              value={formData.status}
+              onValueChange={(value) =>
+                setFormData({ ...formData, status: value as KYCStatus })
+              }
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -117,7 +151,9 @@ export function KYCLevelModal({ isOpen, onClose, onSave, level }: KYCLevelModalP
                 id="maxDeposit"
                 type="number"
                 value={formData.maxDepositAmount}
-                onChange={(e) => setFormData({ ...formData, maxDepositAmount: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, maxDepositAmount: e.target.value })
+                }
                 placeholder="0"
               />
             </div>
@@ -128,7 +164,12 @@ export function KYCLevelModal({ isOpen, onClose, onSave, level }: KYCLevelModalP
                 id="maxWithdrawal"
                 type="number"
                 value={formData.maxWithdrawalAmount}
-                onChange={(e) => setFormData({ ...formData, maxWithdrawalAmount: e.target.value })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    maxWithdrawalAmount: e.target.value,
+                  })
+                }
                 placeholder="0"
               />
             </div>
@@ -141,7 +182,9 @@ export function KYCLevelModal({ isOpen, onClose, onSave, level }: KYCLevelModalP
                 id="duration"
                 type="number"
                 value={formData.duration}
-                onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, duration: e.target.value })
+                }
                 placeholder="30"
                 required
               />
@@ -149,7 +192,12 @@ export function KYCLevelModal({ isOpen, onClose, onSave, level }: KYCLevelModalP
 
             <div className="space-y-2">
               <Label htmlFor="timeUnit">Time Unit</Label>
-              <Select value={formData.timeUnit} onValueChange={(value) => setFormData({ ...formData, timeUnit: value as TimeUnit })}>
+              <Select
+                value={formData.timeUnit}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, timeUnit: value as TimeUnit })
+                }
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -168,12 +216,10 @@ export function KYCLevelModal({ isOpen, onClose, onSave, level }: KYCLevelModalP
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit">
-              {level ? 'Update' : 'Create'}
-            </Button>
+            <Button type="submit">{level ? "Update" : "Create"}</Button>
           </div>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

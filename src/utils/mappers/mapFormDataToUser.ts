@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import { UserInfo } from "../../contexts/KYCContext";
-import { KYCStatus, User } from "../../contexts/KYCAdminContext";
-import { AuthUser } from "../../contexts/AuthContext";
+import { KYCStatus, User as AdminUser } from "../../contexts/KYCAdminContext";
+import { User as AuthUser } from "../../contexts/AuthContext";
 
 // Utility: split full name into first and last
 function splitName(fullName: string) {
@@ -14,7 +14,7 @@ function splitName(fullName: string) {
 export function mapFormDataToUser(
   formData: UserInfo,
   authUser: AuthUser
-): User {
+): AdminUser {
   const { firstName, lastName } = splitName(formData.fullName);
 
   return {
@@ -23,7 +23,7 @@ export function mapFormDataToUser(
     first_name: firstName,
     last_name: lastName,
     login: authUser?.email || "",
-    date_of_birth: formData.dateOfBirth, // already yyyy-mm-dd
+    date_of_birth: formData.dateOfBirth,
     country: formData.country || "India",
     contacts: {
       emails: [authUser?.email || ""],
@@ -48,7 +48,7 @@ export function mapFormDataToUser(
         },
       ],
     },
-    id_proof: formData.pan, // until UserKYCDetail attachments are implemented
+    id_proof: formData.pan,
     kyc_status: KYCStatus.NotSubmitted,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),

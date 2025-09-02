@@ -9,6 +9,8 @@ import { UserDetailPage } from "../../pages/admin/UserDetailPage";
 import { UserKYCReviewPage } from "../../pages/admin/UserKYCReviewPage";
 import { AdminProfilePage } from "../../pages/admin/AdminProfilePage";
 import { FIUIndiaJourneyPage } from "../../pages/user/FIUIndiaJourneyPage";
+import { KYCDetailsPage } from "@/pages/KYCDetailsPage";
+import KYCLevelDetailsPage from "@/pages/KYCLevelDetailsPage";
 
 export function AdminLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // desktop only
@@ -41,6 +43,11 @@ export function AdminLayout() {
               />
               <Route path="/admin/dashboard" element={<DashboardPage />} />
               <Route path="/admin/kyc-levels" element={<KYCLevelsPage />} />
+              <Route path="/admin/kyc-details" element={<KYCDetailsPage />} />
+              <Route
+                path="/admin/kyc-levels/:levelId"
+                element={<KYCLevelDetailsPage />}
+              />
               <Route path="/admin/users" element={<UsersPage />} />
               <Route path="/admin/users/:userId" element={<UserDetailPage />} />
               <Route

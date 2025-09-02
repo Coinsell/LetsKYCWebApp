@@ -1,121 +1,135 @@
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
-import { Button } from '../../components/ui/button'
-import { Input } from '../../components/ui/input'
-import { Badge } from '../../components/ui/badge'
-import { useKYCAdmin, KYCLevel, KYCStatus, TimeUnit } from '../../contexts/KYCAdminContext'
-import { Plus, Pencil, Trash2, Settings } from 'lucide-react'
-import { KYCLevelModal } from '../../components/modals/KYCLevelModal'
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Badge } from "../../components/ui/badge";
+import {
+  useKYCAdmin,
+  KYCLevel,
+  KYCStatus,
+  TimeUnit,
+} from "../../contexts/KYCAdminContext";
+import { Plus, Pencil, Trash2, Settings } from "lucide-react";
+import { KYCLevelModal } from "../../components/modals/KYCLevelModal";
 
 export function KYCLevelsPage() {
-  const { state, dispatch } = useKYCAdmin()
-  const [searchTerm, setSearchTerm] = useState('')
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingLevel, setEditingLevel] = useState<KYCLevel | null>(null)
+  const { state, dispatch } = useKYCAdmin();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingLevel, setEditingLevel] = useState<KYCLevel | null>(null);
 
   useEffect(() => {
-    fetchKYCLevels()
-  }, [])
+    fetchKYCLevels();
+  }, []);
 
   const fetchKYCLevels = async () => {
-    dispatch({ type: 'SET_LOADING', payload: true })
+    dispatch({ type: "SET_LOADING", payload: true });
     try {
       // Mock API call - replace with actual API
       const mockLevels: KYCLevel[] = [
         {
-          id: '1',
-          kycLevelId: 'kyc-level-1',
-          code: 'BASIC',
-          description: 'Basic KYC Level for new users',
+          id: "1",
+          kycLevelId: "kyc-level-1",
+          code: "BASIC",
+          description: "Basic KYC Level for new users",
           status: KYCStatus.Approved,
           maxDepositAmount: 10000,
           maxWithdrawalAmount: 5000,
           duration: 30,
-          timeUnit: TimeUnit.days
+          timeUnit: TimeUnit.Day,
         },
         {
-          id: '2',
-          kycLevelId: 'kyc-level-2',
-          code: 'INTERMEDIATE',
-          description: 'Intermediate KYC Level with higher limits',
+          id: "2",
+          kycLevelId: "kyc-level-2",
+          code: "INTERMEDIATE",
+          description: "Intermediate KYC Level with higher limits",
           status: KYCStatus.Approved,
           maxDepositAmount: 50000,
           maxWithdrawalAmount: 25000,
           duration: 6,
-          timeUnit: TimeUnit.months
+          timeUnit: TimeUnit.Month,
         },
         {
-          id: '3',
-          kycLevelId: 'kyc-level-3',
-          code: 'PREMIUM',
-          description: 'Premium KYC Level with highest limits',
+          id: "3",
+          kycLevelId: "kyc-level-3",
+          code: "PREMIUM",
+          description: "Premium KYC Level with highest limits",
           status: KYCStatus.Approved,
           maxDepositAmount: 100000,
           maxWithdrawalAmount: 50000,
           duration: 1,
-          timeUnit: TimeUnit.years
-        }
-      ]
-      dispatch({ type: 'SET_KYC_LEVELS', payload: mockLevels })
+          timeUnit: TimeUnit.Year,
+        },
+      ];
+      dispatch({ type: "SET_KYC_LEVELS", payload: mockLevels });
     } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: 'Failed to fetch KYC levels' })
+      dispatch({ type: "SET_ERROR", payload: "Failed to fetch KYC levels" });
     } finally {
-      dispatch({ type: 'SET_LOADING', payload: false })
+      dispatch({ type: "SET_LOADING", payload: false });
     }
-  }
+  };
 
   const handleCreate = () => {
-    setEditingLevel(null)
-    setIsModalOpen(true)
-  }
+    setEditingLevel(null);
+    setIsModalOpen(true);
+  };
 
   const handleEdit = (level: KYCLevel) => {
-    setEditingLevel(level)
-    setIsModalOpen(true)
-  }
+    setEditingLevel(level);
+    setIsModalOpen(true);
+  };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this KYC level?')) {
+    if (confirm("Are you sure you want to delete this KYC level?")) {
       try {
         // Mock API call - replace with actual API
-        dispatch({ type: 'DELETE_KYC_LEVEL', payload: id })
+        dispatch({ type: "DELETE_KYC_LEVEL", payload: id });
       } catch (error) {
-        dispatch({ type: 'SET_ERROR', payload: 'Failed to delete KYC level' })
+        dispatch({ type: "SET_ERROR", payload: "Failed to delete KYC level" });
       }
     }
-  }
+  };
 
   const handleSave = async (level: Partial<KYCLevel>) => {
     try {
       if (editingLevel) {
         // Update existing level
-        const updatedLevel = { ...editingLevel, ...level }
-        dispatch({ type: 'UPDATE_KYC_LEVEL', payload: updatedLevel })
+        const updatedLevel = { ...editingLevel, ...level };
+        dispatch({ type: "UPDATE_KYC_LEVEL", payload: updatedLevel });
       } else {
         // Create new level
         const newLevel: KYCLevel = {
           id: Date.now().toString(),
           kycLevelId: `kyc-level-${Date.now()}`,
-          ...level
-        } as KYCLevel
-        dispatch({ type: 'ADD_KYC_LEVEL', payload: newLevel })
+          ...level,
+        } as KYCLevel;
+        dispatch({ type: "ADD_KYC_LEVEL", payload: newLevel });
       }
-      setIsModalOpen(false)
+      setIsModalOpen(false);
     } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: 'Failed to save KYC level' })
+      dispatch({ type: "SET_ERROR", payload: "Failed to save KYC level" });
     }
-  }
+  };
 
-  const filteredLevels = state.kycLevels.filter(level =>
-    level.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    level.description.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredLevels = state.kycLevels.filter(
+    (level) =>
+      level.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      level.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">KYC Levels</h1>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
+            KYC Levels
+          </h1>
           <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
             Manage KYC levels and their configurations
           </p>
@@ -131,7 +145,9 @@ export function KYCLevelsPage() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>KYC Levels</CardTitle>
-              <CardDescription>Configure different KYC levels for users</CardDescription>
+              <CardDescription>
+                Configure different KYC levels for users
+              </CardDescription>
             </div>
             <div className="w-72">
               <Input
@@ -145,35 +161,61 @@ export function KYCLevelsPage() {
         <CardContent>
           <div className="space-y-4">
             {filteredLevels.map((level) => (
-              <div key={level.id} className="flex items-center justify-between p-4 border border-neutral-200 dark:border-neutral-700 rounded-lg">
+              <div
+                key={level.id}
+                className="flex items-center justify-between p-4 border border-neutral-200 dark:border-neutral-700 rounded-lg"
+              >
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="font-semibold text-lg">{level.code}</h3>
-                    <Badge 
+                    <Badge
                       variant={
-                        level.status === KYCStatus.Approved ? 'success' :
-                        level.status === KYCStatus.Rejected ? 'destructive' :
-                        'warning'
+                        level.status === KYCStatus.Approved
+                          ? "success"
+                          : level.status === KYCStatus.Rejected
+                          ? "destructive"
+                          : "warning"
                       }
                     >
                       {level.status}
                     </Badge>
                   </div>
-                  <p className="text-neutral-600 dark:text-neutral-400 mb-2">{level.description}</p>
+                  <p className="text-neutral-600 dark:text-neutral-400 mb-2">
+                    {level.description}
+                  </p>
                   <div className="flex gap-4 text-sm text-neutral-500">
-                    <span>Max Deposit: ${level.maxDepositAmount?.toLocaleString()}</span>
-                    <span>Max Withdrawal: ${level.maxWithdrawalAmount?.toLocaleString()}</span>
-                    <span>Duration: {level.duration} {level.timeUnit}</span>
+                    <span>
+                      Max Deposit: ${level.maxDepositAmount?.toLocaleString()}
+                    </span>
+                    <span>
+                      Max Withdrawal: $
+                      {level.maxWithdrawalAmount?.toLocaleString()}
+                    </span>
+                    <span>
+                      Duration: {level.duration} {level.timeUnit}
+                    </span>
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" title="Manage KYC Details">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    title="Manage KYC Details"
+                  >
                     <Settings className="h-4 w-4" />
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleEdit(level)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleEdit(level)}
+                  >
                     <Pencil className="h-4 w-4" />
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleDelete(level.id)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDelete(level.id)}
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -195,5 +237,5 @@ export function KYCLevelsPage() {
         level={editingLevel}
       />
     </div>
-  )
+  );
 }

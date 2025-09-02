@@ -105,9 +105,13 @@ export enum KycDetailType {
 }
 
 export enum TimeUnit {
-  days = "days",
-  months = "months",
-  years = "years",
+  Year = "Year",
+  Month = "Month",
+  Day = "Day",
+  Hour = "Hour",
+  Minute = "Minute",
+  Second = "Second",
+  MilliSecond = "MilliSecond",
 }
 
 export interface Contact {

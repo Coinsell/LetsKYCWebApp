@@ -16,17 +16,33 @@ import {
   TimeUnit,
 } from "../../contexts/KYCAdminContext";
 import { Plus, Pencil, Trash2, Settings } from "lucide-react";
-import { KYCLevelModal } from "../../components/modals/KYCLevelModal";
+import { useNavigate } from "react-router-dom";
+import { kycLevelsApi } from "@/lib/kyclevelsapi";
+// import { KYCLevelModal } from "../../components/modals/KYCLevelModal";
 
 export function KYCLevelsPage() {
   const { state, dispatch } = useKYCAdmin();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLevel, setEditingLevel] = useState<KYCLevel | null>(null);
 
   useEffect(() => {
-    fetchKYCLevels();
+    // fetchKYCLevels();
+    loadLevels();
   }, []);
+
+  const loadLevels = async () => {
+    dispatch({ type: "SET_LOADING", payload: true });
+    try {
+      const levels = await kycLevelsApi.list();
+      dispatch({ type: "SET_KYC_LEVELS", payload: levels });
+    } catch (error) {
+      dispatch({ type: "SET_ERROR", payload: "Failed to fetch KYC levels" });
+    } finally {
+      dispatch({ type: "SET_LOADING", payload: false });
+    }
+  };
 
   const fetchKYCLevels = async () => {
     dispatch({ type: "SET_LOADING", payload: true });
@@ -77,18 +93,40 @@ export function KYCLevelsPage() {
 
   const handleCreate = () => {
     setEditingLevel(null);
-    setIsModalOpen(true);
+    // setIsModalOpen(true);
+    navigate("/admin/kyc-levels/new");
   };
 
   const handleEdit = (level: KYCLevel) => {
     setEditingLevel(level);
-    setIsModalOpen(true);
+    // setIsModalOpen(true);
+    navigate(`/admin/kyc-levels/${level.id}`, { state: { level } });
   };
 
+  // Save (create or update)
+  const handleSave = async (level: Partial<KYCLevel>) => {
+    try {
+      if (editingLevel) {
+        const updated = await kycLevelsApi.update(editingLevel.id, {
+          ...editingLevel,
+          ...level,
+        });
+        dispatch({ type: "UPDATE_KYC_LEVEL", payload: updated });
+      } else {
+        const created = await kycLevelsApi.create(level);
+        dispatch({ type: "ADD_KYC_LEVEL", payload: created });
+      }
+      setIsModalOpen(false);
+    } catch (error) {
+      dispatch({ type: "SET_ERROR", payload: "Failed to save KYC level" });
+    }
+  };
+
+  // Delete
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this KYC level?")) {
       try {
-        // Mock API call - replace with actual API
+        await kycLevelsApi.delete(id);
         dispatch({ type: "DELETE_KYC_LEVEL", payload: id });
       } catch (error) {
         dispatch({ type: "SET_ERROR", payload: "Failed to delete KYC level" });
@@ -96,26 +134,26 @@ export function KYCLevelsPage() {
     }
   };
 
-  const handleSave = async (level: Partial<KYCLevel>) => {
-    try {
-      if (editingLevel) {
-        // Update existing level
-        const updatedLevel = { ...editingLevel, ...level };
-        dispatch({ type: "UPDATE_KYC_LEVEL", payload: updatedLevel });
-      } else {
-        // Create new level
-        const newLevel: KYCLevel = {
-          id: Date.now().toString(),
-          kycLevelId: `kyc-level-${Date.now()}`,
-          ...level,
-        } as KYCLevel;
-        dispatch({ type: "ADD_KYC_LEVEL", payload: newLevel });
-      }
-      setIsModalOpen(false);
-    } catch (error) {
-      dispatch({ type: "SET_ERROR", payload: "Failed to save KYC level" });
-    }
-  };
+  // const handleSave = async (level: Partial<KYCLevel>) => {
+  //   try {
+  //     if (editingLevel) {
+  //       // Update existing level
+  //       const updatedLevel = { ...editingLevel, ...level };
+  //       dispatch({ type: "UPDATE_KYC_LEVEL", payload: updatedLevel });
+  //     } else {
+  //       // Create new level
+  //       const newLevel: KYCLevel = {
+  //         id: Date.now().toString(),
+  //         kycLevelId: `kyc-level-${Date.now()}`,
+  //         ...level,
+  //       } as KYCLevel;
+  //       dispatch({ type: "ADD_KYC_LEVEL", payload: newLevel });
+  //     }
+  //     setIsModalOpen(false);
+  //   } catch (error) {
+  //     dispatch({ type: "SET_ERROR", payload: "Failed to save KYC level" });
+  //   }
+  // };
 
   const filteredLevels = state.kycLevels.filter(
     (level) =>
@@ -230,12 +268,12 @@ export function KYCLevelsPage() {
         </CardContent>
       </Card>
 
-      <KYCLevelModal
+      {/* <KYCLevelModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSave}
         level={editingLevel}
-      />
+      /> */}
     </div>
   );
 }

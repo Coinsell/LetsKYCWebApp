@@ -1,15 +1,16 @@
 // src/pages/KYCLevelDetailsPage.tsx
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   KYCLevel,
   KYCDetail,
   KYCStatus,
   TimeUnit,
   KycDetailType,
-  useKYCAdmin,
 } from "../contexts/KYCAdminContext";
 import { useParams } from "react-router-dom";
+import { kycLevelsApi } from "../lib/kyclevelsapi";
+import { kycDetailsApi } from "@/lib/kycdetailsapi";
 
 // Utility: map enums to friendly labels
 const kycStatusLabels: Record<KYCStatus, string> = {
@@ -74,17 +75,64 @@ function formatCurrency(amount?: number | null) {
 
 const KYCLevelDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { state, dispatch } = useKYCAdmin();
 
-  const level: KYCLevel | undefined = state.kycLevels.find((l) => l.id === id);
-  const levelDetails: KYCDetail[] = state.kycDetails.filter(
-    (d) => d.kycLevelId === id
-  );
+  const [level, setLevel] = useState<KYCLevel | null>(null);
+  const [levelDetails, setLevelDetails] = useState<KYCDetail[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!level) {
+  useEffect(() => {
+    if (!id) return;
+
+    if (!id || id === "new") {
+      setLevel({
+        id: "",
+        kycLevelId: "",
+        code: "",
+        description: "",
+        status: KYCStatus.NotSubmitted,
+        maxDepositAmount: null,
+        maxWithdrawalAmount: null,
+        duration: 0,
+        timeUnit: TimeUnit.Day,
+      });
+      setLevelDetails([]);
+      setLoading(false);
+      return;
+    }
+
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const levelData = await kycLevelsApi.get(id);
+        const detailsData = await kycDetailsApi.getByLevel(id);
+        setLevel(levelData);
+        setLevelDetails(detailsData);
+      } catch (err: any) {
+        console.error("Failed to fetch KYC Level details:", err);
+        setError(err.message || "Error fetching data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [id]);
+
+  if (loading) {
     return (
       <div className="p-6">
-        <p className="text-red-500 font-medium">KYC Level not found.</p>
+        <p className="text-gray-500">Loading...</p>
+      </div>
+    );
+  }
+
+  if (error || !level) {
+    return (
+      <div className="p-6">
+        <p className="text-red-500 font-medium">
+          {error || "KYC Level not found."}
+        </p>
       </div>
     );
   }
@@ -176,7 +224,7 @@ const KYCLevelDetailsPage: React.FC = () => {
                     <div>
                       <p className="text-gray-500">Attachments</p>
                       <p className="font-medium">
-                        {detail.hasAttachments
+                        {detail.hasAttachments && detail.attachments
                           ? `${detail.attachments.length} file(s)`
                           : "None"}
                       </p>

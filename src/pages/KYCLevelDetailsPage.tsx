@@ -152,26 +152,29 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
     if (!level) return;
     console.log("Saving KYC Level", level);
     try {
-      // Build payload: If creating (no id) send minimal required fields.
-      const payload: Partial<KYCLevel> = {
-        ...level,
-      };
+      const payload: Partial<KYCLevel> = { ...level };
 
-      // If payload.id is empty string, assume create; otherwise update.
       if (!payload.id) {
-        // ensure a kycLevelId exists
+        // New → create
         payload.kycLevelId = payload.kycLevelId || `kyc-${Date.now()}`;
         const created = await kycLevelsApi.create(payload);
         console.log("Created KYC Level", created);
+
+        // Stay on this page, switch to edit mode
+        navigate(`/admin/kyc-levels/${created.id}`);
       } else {
+        // Existing → update
         const updated = await kycLevelsApi.update(
           payload.id as string,
           payload
         );
         console.log("Updated KYC Level", updated);
-      }
 
-      navigate("/admin/kyc-levels");
+        // Reload data (stay on same page)
+        setLevel(updated);
+        const detailsData = await kycDetailsApi.getByLevel(updated.id);
+        setLevelDetails(detailsData || []);
+      }
     } catch (err: any) {
       console.error(err);
       setError(err?.message || "Failed to save level");
@@ -201,7 +204,7 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
   }
 
   function handleEditDetailClick(detail: KYCDetail) {
-    setEditingDetail({ ...detail }); // copy
+    setEditingDetail({ ...detail });
   }
 
   function handleCancelDetailEdit() {

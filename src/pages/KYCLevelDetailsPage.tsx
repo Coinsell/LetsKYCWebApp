@@ -13,7 +13,7 @@ import { kycDetailsApi } from "@/lib/kycdetailsapi";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-// Utility: map enums to friendly labels
+// Enum-label maps
 const kycStatusLabels: Record<KYCStatus, string> = {
   [KYCStatus.NotSubmitted]: "Not Submitted",
   [KYCStatus.InProgress]: "In Progress",
@@ -22,7 +22,6 @@ const kycStatusLabels: Record<KYCStatus, string> = {
   [KYCStatus.Approved]: "Approved",
   [KYCStatus.Rejected]: "Rejected",
 };
-
 const kycStatusColors: Record<KYCStatus, string> = {
   [KYCStatus.NotSubmitted]: "bg-gray-200 text-gray-700",
   [KYCStatus.InProgress]: "bg-blue-200 text-blue-700",
@@ -31,7 +30,6 @@ const kycStatusColors: Record<KYCStatus, string> = {
   [KYCStatus.Approved]: "bg-green-200 text-green-800",
   [KYCStatus.Rejected]: "bg-red-200 text-red-800",
 };
-
 const kycDetailTypeLabels: Record<KycDetailType, string> = {
   general: "General",
   phoneNo: "Phone Number",
@@ -47,7 +45,6 @@ const kycDetailTypeLabels: Record<KycDetailType, string> = {
   [KycDetailType.pan]: "PAN",
   [KycDetailType.liveliness]: "Liveliness Check",
 };
-
 const timeUnitLabels: Record<TimeUnit, string> = {
   [TimeUnit.Year]: "Year",
   [TimeUnit.Month]: "Month",
@@ -58,11 +55,11 @@ const timeUnitLabels: Record<TimeUnit, string> = {
   [TimeUnit.MilliSecond]: "Millisecond",
 };
 
+// Helpers
 function formatDuration(duration: number, unit: TimeUnit) {
   const label = timeUnitLabels[unit];
   return `${duration} ${label}${duration > 1 ? "s" : ""}`;
 }
-
 function formatCurrency(amount?: number | null) {
   if (amount == null) return "N/A";
   return new Intl.NumberFormat("en-IN", {
@@ -71,19 +68,12 @@ function formatCurrency(amount?: number | null) {
     maximumFractionDigits: 0,
   }).format(amount);
 }
-
-/**
- * toEnum - safe cast helper for string enums
- * enumObj: the enum (object)
- * value: the incoming string value (from event.target.value)
- */
 function toEnum<E extends Record<string, string>>(
   enumObj: E,
   value: string
 ): E[keyof E] {
   const vals = Object.values(enumObj) as unknown as string[];
   if (vals.includes(value)) return value as unknown as E[keyof E];
-  // fallback: return first enum value
   return vals[0] as unknown as E[keyof E];
 }
 
@@ -94,8 +84,6 @@ interface Props {
 const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-
-  // if parent passes mode="create" we'll treat as new, otherwise route /admin/kyc-levels/new should be used
   const isNewRoute = id === "new" || mode === "create";
 
   const [level, setLevel] = useState<KYCLevel | null>(null);
@@ -103,7 +91,7 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // editingDetail is Partial because while editing we may not have all fields filled yet
+  const [editingLevel, setEditingLevel] = useState<KYCLevel | null>(null);
   const [editingDetail, setEditingDetail] = useState<Partial<KYCDetail> | null>(
     null
   );
@@ -113,8 +101,7 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
       try {
         setLoading(true);
         if (isNewRoute) {
-          // create empty level template
-          setLevel({
+          const emptyLevel: KYCLevel = {
             id: "",
             kycLevelId: "",
             code: "",
@@ -124,16 +111,16 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
             maxWithdrawalAmount: undefined,
             duration: 0,
             timeUnit: TimeUnit.Day,
-          });
+          };
+          setLevel(emptyLevel);
+          setEditingLevel(emptyLevel);
           setLevelDetails([]);
           return;
         }
-
         if (!id) {
           setError("Missing id");
           return;
         }
-
         const levelData = await kycLevelsApi.get(id);
         const detailsData = await kycDetailsApi.getByLevel(id);
         setLevel(levelData);
@@ -145,35 +132,27 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
         setLoading(false);
       }
     };
-
     load();
   }, [id, isNewRoute]);
 
-  // Save KYC Level
+  // --- Level Save ---
   async function handleSaveLevel() {
-    if (!level) return;
-    console.log("Saving KYC Level", level);
+    if (!editingLevel) return;
     try {
-      const payload: Partial<KYCLevel> = { ...level };
-
-      if (!payload.id) {
-        // New → create
-        payload.kycLevelId = payload.kycLevelId || `kyc-${Date.now()}`;
-        const created = await kycLevelsApi.create(payload);
-        console.log("Created KYC Level", created);
-
-        // Stay on this page, switch to edit mode
+      if (!editingLevel.id) {
+        editingLevel.kycLevelId =
+          editingLevel.kycLevelId || `kyc-${Date.now()}`;
+        const created = await kycLevelsApi.create(editingLevel);
+        setLevel(created);
+        setEditingLevel(null); // ← Exit edit mode
         navigate(`/admin/kyc-levels/${created.id}`);
       } else {
-        // Existing → update
         const updated = await kycLevelsApi.update(
-          payload.id as string,
-          payload
+          editingLevel.id,
+          editingLevel
         );
-        console.log("Updated KYC Level", updated);
-
-        // Reload data (stay on same page)
         setLevel(updated);
+        setEditingLevel(null); // ← Exit edit mode
         const detailsData = await kycDetailsApi.getByLevel(updated.id);
         setLevelDetails(detailsData || []);
       }
@@ -183,13 +162,16 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
     }
   }
 
-  // Helpers for KYC Details editing
+  function handleEditLevel() {
+    setEditingLevel(level);
+  }
+
+  // --- KYC Detail Functions (unchanged) ---
   function makeEmptyDetail(): Partial<KYCDetail> {
     const seq = levelDetails.length
       ? Math.max(...levelDetails.map((d) => d.sequence)) + 1
       : 1;
     return {
-      // id left undefined for create
       kycLevelId: level?.id || "",
       sequence: seq,
       step: "",
@@ -200,64 +182,63 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
       attachments: [],
     };
   }
-
   function handleAddDetailClick() {
     setEditingDetail(makeEmptyDetail());
   }
-
   function handleEditDetailClick(detail: KYCDetail) {
     setEditingDetail({ ...detail });
   }
-
   function handleCancelDetailEdit() {
     setEditingDetail(null);
     setError(null);
   }
 
-  // Save (create or update) detail
   async function handleSaveDetail() {
     if (!editingDetail || !level) return;
+
     try {
       let savedDetail: KYCDetail;
 
       if (editingDetail.id) {
-        // Update path - construct full payload merging with existing
+        // --- Update existing detail ---
         const existing = levelDetails.find((d) => d.id === editingDetail.id);
-        if (!existing) throw new Error("Existing detail not found for update");
+        if (!existing) throw new Error("Detail not found");
 
         const payload: KYCDetail = {
           ...existing,
           ...editingDetail,
-          // ensure enums and required fields are present
-          type: (editingDetail.type ?? existing.type) as KycDetailType,
-          status: (editingDetail.status ?? existing.status) as KYCStatus,
-          sequence: editingDetail.sequence ?? existing.sequence,
-          step: editingDetail.step ?? existing.step,
-          description: editingDetail.description ?? existing.description,
-          hasAttachments:
-            editingDetail.hasAttachments ?? existing.hasAttachments,
-          attachments: editingDetail.attachments ?? existing.attachments ?? [],
+          kycLevelId: level.id,
         };
 
         savedDetail = await kycDetailsApi.update(payload.id, payload);
+
         setLevelDetails((prev) =>
           prev.map((d) => (d.id === savedDetail.id ? savedDetail : d))
         );
       } else {
-        // Create path - ensure full object
+        // --- Create new detail ---
+        const nextSequence =
+          levelDetails.length > 0
+            ? Math.max(...levelDetails.map((d) => d.sequence)) + 1
+            : 1;
+
+        // Assign a temporary ID to satisfy typing
+        const newId = Date.now().toString();
+
         const payload: KYCDetail = {
-          id: Date.now().toString() + Math.floor(Math.random() * 1000), // simple id gen
+          id: newId,
           kycLevelId: level.id,
-          sequence: editingDetail.sequence ?? levelDetails.length + 1,
+          sequence: editingDetail.sequence ?? nextSequence,
           step: editingDetail.step ?? "",
           description: editingDetail.description ?? "",
-          type: (editingDetail.type ?? KycDetailType.general) as KycDetailType,
-          status: (editingDetail.status ?? KYCStatus.NotSubmitted) as KYCStatus,
+          type: editingDetail.type ?? KycDetailType.general,
+          status: editingDetail.status ?? KYCStatus.NotSubmitted,
           hasAttachments: editingDetail.hasAttachments ?? false,
           attachments: editingDetail.attachments ?? [],
         };
 
         savedDetail = await kycDetailsApi.create(payload);
+
         setLevelDetails((prev) => [...prev, savedDetail]);
       }
 
@@ -268,7 +249,6 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
     }
   }
 
-  // Delete detail
   async function handleDeleteDetail(idToDelete: string) {
     if (!confirm("Delete this detail?")) return;
     try {
@@ -280,70 +260,67 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
     }
   }
 
-  if (loading) {
+  if (loading) return <div className="p-6 text-gray-500">Loading...</div>;
+  if (error || !level)
     return (
-      <div className="p-6">
-        <p className="text-gray-500">Loading...</p>
+      <div className="p-6 text-red-500 font-medium">
+        {error || "KYC Level not found"}
       </div>
     );
-  }
 
-  if (error || !level) {
-    return (
-      <div className="p-6">
-        <p className="text-red-500 font-medium">
-          {error || "KYC Level not found."}
-        </p>
-      </div>
-    );
-  }
-
-  // Option arrays from enums (string enums)
   const timeUnitOptions = Object.values(TimeUnit).map((v) => ({
     value: v,
-    label: timeUnitLabels[v as TimeUnit] || v,
+    label: timeUnitLabels[v] || v,
   }));
   const kycStatusOptions = Object.values(KYCStatus).map((v) => ({
     value: v,
-    label: kycStatusLabels[v as KYCStatus] || v,
+    label: kycStatusLabels[v] || v,
   }));
   const kycTypeOptions = Object.values(KycDetailType).map((v) => ({
     value: v,
     label: kycDetailTypeLabels[v as KycDetailType] || v,
   }));
 
+  // --- Render ---
   return (
     <div className="p-6 space-y-6">
-      {/* KYC Level Card or Form */}
+      {/* --- Level Card / Form --- */}
       <div className="bg-white shadow rounded-2xl p-6 space-y-3">
-        {isNewRoute ? (
+        {editingLevel ? (
           <>
-            <h2 className="text-2xl font-bold">Create New KYC Level</h2>
+            <h2 className="text-2xl font-bold">
+              {isNewRoute ? "Create Level" : "Edit Level"}
+            </h2>
             <div className="grid grid-cols-2 gap-4 pt-4">
               <input
                 type="text"
                 placeholder="Code"
                 className="border p-2 rounded"
-                value={level.code}
-                onChange={(e) => setLevel({ ...level, code: e.target.value })}
+                value={editingLevel.code}
+                onChange={(e) =>
+                  setEditingLevel({ ...editingLevel, code: e.target.value })
+                }
               />
               <input
                 type="text"
                 placeholder="Description"
                 className="border p-2 rounded"
-                value={level.description}
+                value={editingLevel.description}
                 onChange={(e) =>
-                  setLevel({ ...level, description: e.target.value })
+                  setEditingLevel({
+                    ...editingLevel,
+                    description: e.target.value,
+                  })
                 }
               />
               <input
                 type="number"
                 placeholder="Max Deposit"
                 className="border p-2 rounded"
-                value={level.maxDepositAmount ?? ""}
+                value={editingLevel.maxDepositAmount ?? ""}
                 onChange={(e) =>
-                  setLevel({
-                    ...level,
+                  setEditingLevel({
+                    ...editingLevel,
                     maxDepositAmount:
                       e.target.value === ""
                         ? undefined
@@ -355,10 +332,10 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
                 type="number"
                 placeholder="Max Withdrawal"
                 className="border p-2 rounded"
-                value={level.maxWithdrawalAmount ?? ""}
+                value={editingLevel.maxWithdrawalAmount ?? ""}
                 onChange={(e) =>
-                  setLevel({
-                    ...level,
+                  setEditingLevel({
+                    ...editingLevel,
                     maxWithdrawalAmount:
                       e.target.value === ""
                         ? undefined
@@ -366,27 +343,28 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
                   })
                 }
               />
-
               <div>
                 <p className="text-sm text-gray-500">Duration</p>
                 <input
                   type="number"
                   className="border p-2 rounded w-full"
-                  value={level.duration}
+                  value={editingLevel.duration}
                   onChange={(e) =>
-                    setLevel({ ...level, duration: Number(e.target.value) })
+                    setEditingLevel({
+                      ...editingLevel,
+                      duration: Number(e.target.value),
+                    })
                   }
                 />
               </div>
-
               <div>
                 <p className="text-sm text-gray-500">Time Unit</p>
                 <select
                   className="border p-2 rounded w-full"
-                  value={level.timeUnit}
+                  value={editingLevel.timeUnit}
                   onChange={(e) =>
-                    setLevel({
-                      ...level,
+                    setEditingLevel({
+                      ...editingLevel,
                       timeUnit: toEnum(TimeUnit, e.target.value),
                     })
                   }
@@ -398,15 +376,14 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
                   ))}
                 </select>
               </div>
-
               <div>
-                <p className="text-sm text-gray-500">Status (optional)</p>
+                <p className="text-sm text-gray-500">Status</p>
                 <select
                   className="border p-2 rounded w-full"
-                  value={level.status}
+                  value={editingLevel.status}
                   onChange={(e) =>
-                    setLevel({
-                      ...level,
+                    setEditingLevel({
+                      ...editingLevel,
                       status: toEnum(KYCStatus, e.target.value),
                     })
                   }
@@ -419,10 +396,18 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
                 </select>
               </div>
             </div>
-            <div className="pt-4">
+            <div className="pt-4 flex gap-2">
+              {!isNewRoute && (
+                <button
+                  className="px-4 py-2 bg-gray-200 rounded"
+                  onClick={() => setEditingLevel(null)}
+                >
+                  Cancel
+                </button>
+              )}
               <button
+                className="px-4 py-2 bg-green-600 text-white rounded"
                 onClick={handleSaveLevel}
-                className="bg-green-600 text-white px-4 py-2 rounded-xl shadow hover:bg-green-700 transition"
               >
                 Save Level
               </button>
@@ -434,17 +419,13 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
               KYC Level: <span className="text-blue-600">{level.code}</span>
             </h2>
             <p className="text-gray-700">{level.description}</p>
-
-            <div className="flex items-center space-x-2">
-              <span
-                className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  kycStatusColors[level.status]
-                }`}
-              >
-                {kycStatusLabels[level.status]}
-              </span>
-            </div>
-
+            <span
+              className={`px-3 py-1 rounded-full text-sm font-medium ${
+                kycStatusColors[level.status]
+              }`}
+            >
+              {kycStatusLabels[level.status]}
+            </span>
             <div className="grid grid-cols-2 gap-4 pt-4">
               <div>
                 <p className="text-gray-500 text-sm">Max Deposit</p>
@@ -465,9 +446,11 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
                 </p>
               </div>
             </div>
-
             <div className="pt-4">
-              <button className="bg-blue-600 text-white px-4 py-2 rounded-xl shadow hover:bg-blue-700 transition">
+              <button
+                className="bg-blue-600 text-white px-4 py-2 rounded-xl shadow hover:bg-blue-700 transition"
+                onClick={handleEditLevel}
+              >
                 Edit Level
               </button>
             </div>
@@ -475,7 +458,7 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
         )}
       </div>
 
-      {/* KYC Details List */}
+      {/* --- KYC Details List --- */}
       {!isNewRoute && (
         <div className="space-y-4">
           <div className="flex justify-between items-center">
@@ -496,6 +479,101 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
               </button>
             </div>
           </div>
+
+          {/* --- New Step Editor --- */}
+          {editingDetail && !editingDetail.id && (
+            <div className="bg-white rounded-xl p-4 shadow mb-4">
+              <h4 className="font-semibold mb-2">New Step</h4>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-gray-600">
+                    Sequence
+                  </label>
+                  <input
+                    type="number"
+                    className="border p-2 rounded w-full"
+                    value={editingDetail.sequence ?? ""}
+                    onChange={(e) =>
+                      setEditingDetail({
+                        ...editingDetail,
+                        sequence: Number(e.target.value),
+                      })
+                    }
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-600">Type</label>
+                  <select
+                    className="border p-2 rounded w-full"
+                    value={editingDetail.type ?? KycDetailType.general}
+                    onChange={(e) =>
+                      setEditingDetail({
+                        ...editingDetail,
+                        type: toEnum(KycDetailType, e.target.value),
+                      })
+                    }
+                  >
+                    {kycTypeOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-600">
+                    Step Title
+                  </label>
+                  <input
+                    type="text"
+                    className="border p-2 rounded w-full"
+                    value={editingDetail.step ?? ""}
+                    onChange={(e) =>
+                      setEditingDetail({
+                        ...editingDetail,
+                        step: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block text-sm text-gray-600">
+                    Description
+                  </label>
+                  <textarea
+                    className="border p-2 rounded w-full"
+                    rows={3}
+                    value={editingDetail.description ?? ""}
+                    onChange={(e) =>
+                      setEditingDetail({
+                        ...editingDetail,
+                        description: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+
+                <div className="col-span-2 flex gap-2 justify-end mt-2">
+                  <button
+                    onClick={handleCancelDetailEdit}
+                    className="px-3 py-2 rounded bg-gray-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveDetail}
+                    className="px-3 py-2 rounded bg-green-600 text-white"
+                  >
+                    Save Step
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {levelDetails.length === 0 ? (
             <p className="text-gray-500">No steps defined for this level.</p>
@@ -555,11 +633,112 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
                     </div>
 
                     {/* Inline editor right below the step */}
-                    {editingDetail?.id === detail.id && (
+                    {/* {editingDetail?.id === detail.id && ( */}
+                    {/* {editingDetail &&
+                      (!editingDetail.id || editingDetail.id === detail.id) && ( */}
+                    {/* {editingDetail && !editingDetail.id && (
                       <div className="bg-white rounded-xl p-4 shadow">
                         <h4 className="font-semibold mb-2">
                           {editingDetail.id ? "Edit Step" : "New Step"}
                         </h4>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm text-gray-600">
+                              Sequence
+                            </label>
+                            <input
+                              type="number"
+                              className="border p-2 rounded w-full"
+                              value={editingDetail.sequence ?? ""}
+                              onChange={(e) =>
+                                setEditingDetail({
+                                  ...editingDetail,
+                                  sequence: Number(e.target.value),
+                                })
+                              }
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm text-gray-600">
+                              Type
+                            </label>
+                            <select
+                              className="border p-2 rounded w-full"
+                              value={
+                                editingDetail.type ?? KycDetailType.general
+                              }
+                              onChange={(e) =>
+                                setEditingDetail({
+                                  ...editingDetail,
+                                  type: toEnum(KycDetailType, e.target.value),
+                                })
+                              }
+                            >
+                              {kycTypeOptions.map((opt) => (
+                                <option key={opt.value} value={opt.value}>
+                                  {opt.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm text-gray-600">
+                              Step Title
+                            </label>
+                            <input
+                              type="text"
+                              className="border p-2 rounded w-full"
+                              value={editingDetail.step ?? ""}
+                              onChange={(e) =>
+                                setEditingDetail({
+                                  ...editingDetail,
+                                  step: e.target.value,
+                                })
+                              }
+                            />
+                          </div>
+
+                          <div className="col-span-2">
+                            <label className="block text-sm text-gray-600">
+                              Description
+                            </label>
+                            <textarea
+                              className="border p-2 rounded w-full"
+                              rows={3}
+                              value={editingDetail.description ?? ""}
+                              onChange={(e) =>
+                                setEditingDetail({
+                                  ...editingDetail,
+                                  description: e.target.value,
+                                })
+                              }
+                            />
+                          </div>
+
+                          <div className="col-span-2 flex gap-2 justify-end mt-2">
+                            <button
+                              onClick={handleCancelDetailEdit}
+                              className="px-3 py-2 rounded bg-gray-200"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={handleSaveDetail}
+                              className="px-3 py-2 rounded bg-green-600 text-white"
+                            >
+                              Save Step
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )} */}
+
+                    {editingDetail?.id === detail.id && (
+                      <div className="bg-white rounded-xl p-4 shadow mb-4">
+                        <h4 className="font-semibold mb-2">Edit Step</h4>
 
                         <div className="grid grid-cols-2 gap-4">
                           <div>

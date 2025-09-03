@@ -135,119 +135,189 @@ const KYCLevelDetailsPage: React.FC = () => {
     );
   }
 
+  const isNew = id === "new";
+
   return (
     <div className="p-6 space-y-6">
-      {/* KYC Level Card */}
+      {/* KYC Level Card or Form */}
       <div className="bg-white shadow rounded-2xl p-6 space-y-3">
-        <h2 className="text-2xl font-bold">
-          KYC Level: <span className="text-blue-600">{level.code}</span>
-        </h2>
-        <p className="text-gray-700">{level.description}</p>
+        {isNew ? (
+          <>
+            <h2 className="text-2xl font-bold">Create New KYC Level</h2>
+            <div className="grid grid-cols-2 gap-4 pt-4">
+              <input
+                type="text"
+                placeholder="Code"
+                className="border p-2 rounded"
+                value={level.code}
+                onChange={(e) => setLevel({ ...level, code: e.target.value })}
+              />
+              <input
+                type="text"
+                placeholder="Description"
+                className="border p-2 rounded"
+                value={level.description}
+                onChange={(e) =>
+                  setLevel({ ...level, description: e.target.value })
+                }
+              />
+              <input
+                type="number"
+                placeholder="Max Deposit"
+                className="border p-2 rounded"
+                value={level.maxDepositAmount ?? ""}
+                onChange={(e) =>
+                  setLevel({
+                    ...level,
+                    maxDepositAmount: Number(e.target.value),
+                  })
+                }
+              />
+              <input
+                type="number"
+                placeholder="Max Withdrawal"
+                className="border p-2 rounded"
+                value={level.maxWithdrawalAmount ?? ""}
+                onChange={(e) =>
+                  setLevel({
+                    ...level,
+                    maxWithdrawalAmount: Number(e.target.value),
+                  })
+                }
+              />
+            </div>
+            <div className="pt-4">
+              <button className="bg-green-600 text-white px-4 py-2 rounded-xl shadow hover:bg-green-700 transition">
+                Save Level
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <h2 className="text-2xl font-bold">
+              KYC Level: <span className="text-blue-600">{level.code}</span>
+            </h2>
+            <p className="text-gray-700">{level.description}</p>
 
-        <div className="flex items-center space-x-2">
-          <span
-            className={`px-3 py-1 rounded-full text-sm font-medium ${
-              kycStatusColors[level.status]
-            }`}
-          >
-            {kycStatusLabels[level.status]}
-          </span>
-        </div>
+            <div className="flex items-center space-x-2">
+              <span
+                className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  kycStatusColors[level.status]
+                }`}
+              >
+                {kycStatusLabels[level.status]}
+              </span>
+            </div>
 
-        <div className="grid grid-cols-2 gap-4 pt-4">
-          <div>
-            <p className="text-gray-500 text-sm">Max Deposit</p>
-            <p className="font-medium">
-              {formatCurrency(level.maxDepositAmount)}
-            </p>
-          </div>
-          <div>
-            <p className="text-gray-500 text-sm">Max Withdrawal</p>
-            <p className="font-medium">
-              {formatCurrency(level.maxWithdrawalAmount)}
-            </p>
-          </div>
-          <div>
-            <p className="text-gray-500 text-sm">Duration</p>
-            <p className="font-medium">
-              {formatDuration(level.duration, level.timeUnit)}
-            </p>
-          </div>
-        </div>
+            <div className="grid grid-cols-2 gap-4 pt-4">
+              <div>
+                <p className="text-gray-500 text-sm">Max Deposit</p>
+                <p className="font-medium">
+                  {formatCurrency(level.maxDepositAmount)}
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-sm">Max Withdrawal</p>
+                <p className="font-medium">
+                  {formatCurrency(level.maxWithdrawalAmount)}
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-sm">Duration</p>
+                <p className="font-medium">
+                  {formatDuration(level.duration, level.timeUnit)}
+                </p>
+              </div>
+            </div>
 
-        <div className="pt-4">
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-xl shadow hover:bg-blue-700 transition">
-            Edit Level
-          </button>
-        </div>
+            <div className="pt-4">
+              <button className="bg-blue-600 text-white px-4 py-2 rounded-xl shadow hover:bg-blue-700 transition">
+                Edit Level
+              </button>
+            </div>
+          </>
+        )}
       </div>
 
       {/* KYC Details List */}
-      <div className="space-y-4">
-        <h3 className="text-xl font-semibold">Verification Steps</h3>
-        {levelDetails.length === 0 ? (
-          <p className="text-gray-500">No steps defined for this level.</p>
-        ) : (
-          <div className="space-y-3">
-            {levelDetails
-              .sort((a, b) => a.sequence - b.sequence)
-              .map((detail) => (
-                <div
-                  key={detail.id}
-                  className="bg-gray-50 rounded-xl p-4 shadow-sm hover:shadow-md transition"
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="font-semibold">
-                        {detail.sequence}. {detail.step}
-                      </h4>
-                      <p className="text-gray-600">{detail.description}</p>
-                    </div>
-                    <span
-                      className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        kycStatusColors[detail.status]
-                      }`}
-                    >
-                      {kycStatusLabels[detail.status]}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-3 text-sm">
-                    <div>
-                      <p className="text-gray-500">Type</p>
-                      <p className="font-medium">
-                        {kycDetailTypeLabels[detail.type]}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Attachments</p>
-                      <p className="font-medium">
-                        {detail.hasAttachments && detail.attachments
-                          ? `${detail.attachments.length} file(s)`
-                          : "None"}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 flex gap-2">
-                    <button className="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm">
-                      Edit
-                    </button>
-                    <button className="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm">
-                      Delete
-                    </button>
-                    <button className="px-3 py-1 bg-gray-200 rounded-lg hover:bg-gray-300 text-sm">
-                      ↑
-                    </button>
-                    <button className="px-3 py-1 bg-gray-200 rounded-lg hover:bg-gray-300 text-sm">
-                      ↓
-                    </button>
-                  </div>
-                </div>
-              ))}
+      {!isNew && (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-xl font-semibold">Verification Steps</h3>
+            <button
+              className="bg-green-600 text-white px-3 py-2 rounded-lg shadow hover:bg-green-700 text-sm"
+              onClick={() => {
+                console.log("Add KYC Detail");
+              }}
+            >
+              + Add Step
+            </button>
           </div>
-        )}
-      </div>
+
+          {levelDetails.length === 0 ? (
+            <p className="text-gray-500">No steps defined for this level.</p>
+          ) : (
+            <div className="space-y-3">
+              {levelDetails
+                .sort((a, b) => a.sequence - b.sequence)
+                .map((detail) => (
+                  <div
+                    key={detail.id}
+                    className="bg-gray-50 rounded-xl p-4 shadow-sm hover:shadow-md transition"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-semibold">
+                          {detail.sequence}. {detail.step}
+                        </h4>
+                        <p className="text-gray-600">{detail.description}</p>
+                      </div>
+                      <span
+                        className={`px-3 py-1 rounded-full text-sm font-medium ${
+                          kycStatusColors[detail.status]
+                        }`}
+                      >
+                        {kycStatusLabels[detail.status]}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-3 text-sm">
+                      <div>
+                        <p className="text-gray-500">Type</p>
+                        <p className="font-medium">
+                          {kycDetailTypeLabels[detail.type]}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">Attachments</p>
+                        <p className="font-medium">
+                          {detail.hasAttachments && detail.attachments
+                            ? `${detail.attachments.length} file(s)`
+                            : "None"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 flex gap-2">
+                      <button className="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm">
+                        Edit
+                      </button>
+                      <button className="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm">
+                        Delete
+                      </button>
+                      <button className="px-3 py-1 bg-gray-200 rounded-lg hover:bg-gray-300 text-sm">
+                        ↑
+                      </button>
+                      <button className="px-3 py-1 bg-gray-200 rounded-lg hover:bg-gray-300 text-sm">
+                        ↓
+                      </button>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

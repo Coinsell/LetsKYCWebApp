@@ -8,7 +8,7 @@ import {
   TimeUnit,
   KycDetailType,
 } from "../contexts/KYCAdminContext";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { kycLevelsApi } from "../lib/kyclevelsapi";
 import { kycDetailsApi } from "@/lib/kycdetailsapi";
 
@@ -57,13 +57,11 @@ const timeUnitLabels: Record<TimeUnit, string> = {
   [TimeUnit.MilliSecond]: "Millisecond",
 };
 
-// Utility: pluralize time units
 function formatDuration(duration: number, unit: TimeUnit) {
   const label = timeUnitLabels[unit];
   return `${duration} ${label}${duration > 1 ? "s" : ""}`;
 }
 
-// Utility: currency formatter
 function formatCurrency(amount?: number | null) {
   if (amount == null) return "N/A";
   return new Intl.NumberFormat("en-IN", {
@@ -73,8 +71,15 @@ function formatCurrency(amount?: number | null) {
   }).format(amount);
 }
 
-const KYCLevelDetailsPage: React.FC = () => {
+interface Props {
+  mode?: "create" | "edit";
+}
+
+const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+
+  const isNew = mode === "create";
 
   const [level, setLevel] = useState<KYCLevel | null>(null);
   const [levelDetails, setLevelDetails] = useState<KYCDetail[]>([]);
@@ -82,7 +87,7 @@ const KYCLevelDetailsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!id || id === "new") {
+    if (isNew) {
       setLevel({
         id: "",
         kycLevelId: "",
@@ -99,23 +104,36 @@ const KYCLevelDetailsPage: React.FC = () => {
       return;
     }
 
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const levelData = await kycLevelsApi.get(id);
-        const detailsData = await kycDetailsApi.getByLevel(id);
-        setLevel(levelData);
-        setLevelDetails(detailsData);
-      } catch (err: any) {
-        console.error("Failed to fetch KYC Level details:", err);
-        setError(err.message || "Error fetching data");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    if (!id) {
+      const fetchData = async () => {
+        try {
+          setLoading(true);
+          const levelData = await kycLevelsApi.get(id);
+          const detailsData = await kycDetailsApi.getByLevel(id);
+          setLevel(levelData);
+          setLevelDetails(detailsData);
+        } catch (err: any) {
+          console.error("Failed to fetch KYC Level details:", err);
+          setError(err.message || "Error fetching data");
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchData();
+    }
   }, [id]);
+
+  async function handleSave() {
+    if (!level) return;
+    try {
+      const created = await kycLevelsApi.create(level);
+      console.log("Created:", created);
+      navigate("/admin/kyc-levels"); // go back to list
+    } catch (err: any) {
+      console.error("Failed to save level:", err);
+      setError(err.message || "Error saving level");
+    }
+  }
 
   if (loading) {
     return (
@@ -134,8 +152,6 @@ const KYCLevelDetailsPage: React.FC = () => {
       </div>
     );
   }
-
-  const isNew = id === "new";
 
   return (
     <div className="p-6 space-y-6">
@@ -187,7 +203,10 @@ const KYCLevelDetailsPage: React.FC = () => {
               />
             </div>
             <div className="pt-4">
-              <button className="bg-green-600 text-white px-4 py-2 rounded-xl shadow hover:bg-green-700 transition">
+              <button
+                onClick={handleSave}
+                className="bg-green-600 text-white px-4 py-2 rounded-xl shadow hover:bg-green-700 transition"
+              >
                 Save Level
               </button>
             </div>

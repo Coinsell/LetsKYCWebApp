@@ -44,13 +44,21 @@ export function AdminLayout() {
               <Route path="/admin/dashboard" element={<DashboardPage />} />
               <Route path="/admin/kyc-levels" element={<KYCLevelsPage />} />
               <Route path="/admin/kyc-details" element={<KYCDetailsPage />} />
-              <Route
-                path="/admin/kyc-levels/:levelId"
+              {/* <Route
+                path="/admin/kyc-levels/:id"
                 element={<KYCLevelDetailsPage />}
               />
               <Route
                 path="/admin/kyc-levels/new"
                 element={<KYCLevelDetailsPage />}
+              /> */}
+              <Route
+                path="/admin/kyc-levels/new"
+                element={<KYCLevelDetailsPage mode="create" />}
+              />
+              <Route
+                path="/admin/kyc-levels/:id"
+                element={<KYCLevelDetailsPage mode="edit" />}
               />
               <Route path="/admin/users" element={<UsersPage />} />
               <Route path="/admin/users/:userId" element={<UserDetailPage />} />

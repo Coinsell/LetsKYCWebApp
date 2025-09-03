@@ -249,10 +249,10 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
     }
   }
 
-  async function handleDeleteDetail(idToDelete: string) {
+  async function handleDeleteDetail(idToDelete: string, kycLevelId: string) {
     if (!confirm("Delete this detail?")) return;
     try {
-      await kycDetailsApi.delete(idToDelete);
+      await kycDetailsApi.delete(idToDelete, kycLevelId);
       setLevelDetails((prev) => prev.filter((d) => d.id !== idToDelete));
     } catch (err: any) {
       console.error(err);
@@ -625,7 +625,9 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
                         </button>
                         <button
                           className="p-2 rounded-lg border border-gray-200 hover:bg-gray-100"
-                          onClick={() => handleDeleteDetail(detail.id)}
+                          onClick={() =>
+                            handleDeleteDetail(detail.id, detail.kycLevelId)
+                          }
                         >
                           <Trash2 className="h-4 w-4 text-red-500" />
                         </button>

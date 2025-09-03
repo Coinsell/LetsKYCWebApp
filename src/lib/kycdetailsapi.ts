@@ -48,11 +48,19 @@ export const kycDetailsApi = {
     }
   },
 
-  delete: async (id: string): Promise<{ message: string }> => {
+  delete: async (
+    id: string,
+    kycLevelId: string
+  ): Promise<{ message: string }> => {
     try {
-      return await api.delete<{ message: string }>(`kyc_details/${id}`);
+      return await api.delete<{ message: string }>(
+        `kyc_details/${id}?kycLevelId=${kycLevelId}` // use snake_case to match FastAPI
+      );
     } catch (error: any) {
-      console.error(`Error deleting KYC detail with id=${id}:`, error);
+      console.error(
+        `Error deleting KYC detail with id=${id} and kycLevelId=${kycLevelId}:`,
+        error
+      );
       throw error;
     }
   },

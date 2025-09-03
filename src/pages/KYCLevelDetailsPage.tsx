@@ -10,6 +10,8 @@ import {
 import { useParams, useNavigate } from "react-router-dom";
 import { kycLevelsApi } from "../lib/kyclevelsapi";
 import { kycDetailsApi } from "@/lib/kycdetailsapi";
+import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 // Utility: map enums to friendly labels
 const kycStatusLabels: Record<KYCStatus, string> = {
@@ -480,16 +482,15 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
             <h3 className="text-xl font-semibold">Verification Steps</h3>
             <div className="flex gap-2">
               <button
-                className="bg-green-600 text-white px-3 py-2 rounded-lg shadow hover:bg-green-700 text-sm"
+                className="flex items-center gap-2 bg-green-600 text-white px-3 py-2 rounded-lg shadow hover:bg-green-700 text-sm"
                 onClick={handleAddDetailClick}
               >
-                + Add Step
+                <Plus className="h-4 w-4" />
+                Add Step
               </button>
               <button
                 className="bg-gray-200 px-3 py-2 rounded-lg text-sm"
-                onClick={() => {
-                  /* optional: reload */
-                }}
+                onClick={() => window.location.reload()}
               >
                 Refresh
               </button>
@@ -503,177 +504,158 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
               {levelDetails
                 .sort((a, b) => a.sequence - b.sequence)
                 .map((detail) => (
-                  <div
-                    key={detail.id}
-                    className="bg-gray-50 rounded-xl p-4 shadow-sm hover:shadow-md transition"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-semibold">
-                          {detail.sequence}. {detail.step}
-                        </h4>
-                        <p className="text-gray-600">{detail.description}</p>
-                      </div>
-                      <div className="text-right">
-                        <span
-                          className={`px-3 py-1 rounded-full text-sm font-medium ${
-                            kycStatusColors[detail.status]
-                          }`}
-                        >
-                          {kycStatusLabels[detail.status]}
-                        </span>
-                        <div className="mt-2 flex gap-2 justify-end">
-                          <button
-                            className="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm"
-                            onClick={() => handleEditDetailClick(detail)}
+                  <div key={detail.id} className="space-y-2">
+                    {/* Step card */}
+                    <div className="flex items-center justify-between border border-neutral-200 rounded-xl p-4 hover:shadow-md transition">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full border border-neutral-200">
+                            Step {detail.sequence}
+                          </span>
+                          <h4 className="font-semibold">{detail.step}</h4>
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full ${
+                              detail.status === KYCStatus.Approved
+                                ? "bg-green-100 text-green-800"
+                                : detail.status === KYCStatus.Rejected
+                                ? "bg-red-100 text-red-800"
+                                : "bg-yellow-100 text-yellow-800"
+                            }`}
                           >
-                            Edit
-                          </button>
-                          <button
-                            className="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm"
-                            onClick={() => handleDeleteDetail(detail.id)}
-                          >
-                            Delete
-                          </button>
+                            {kycStatusLabels[detail.status]}
+                          </span>
+                        </div>
+                        <p className="text-gray-600 mb-2">
+                          {detail.description}
+                        </p>
+                        <div className="flex gap-6 text-sm text-gray-500">
+                          <span>Type: {kycDetailTypeLabels[detail.type]}</span>
+                          <span>
+                            Attachments:{" "}
+                            {detail.hasAttachments && detail.attachments?.length
+                              ? `${detail.attachments.length} file(s)`
+                              : "None"}
+                          </span>
                         </div>
                       </div>
+                      <div className="flex gap-2 ml-4">
+                        <button
+                          className="p-2 rounded-lg border border-gray-200 hover:bg-gray-100"
+                          onClick={() => handleEditDetailClick(detail)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          className="p-2 rounded-lg border border-gray-200 hover:bg-gray-100"
+                          onClick={() => handleDeleteDetail(detail.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </button>
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-3 text-sm">
-                      <div>
-                        <p className="text-gray-500">Type</p>
-                        <p className="font-medium">
-                          {kycDetailTypeLabels[detail.type]}
-                        </p>
+                    {/* Inline editor right below the step */}
+                    {editingDetail?.id === detail.id && (
+                      <div className="bg-white rounded-xl p-4 shadow">
+                        <h4 className="font-semibold mb-2">
+                          {editingDetail.id ? "Edit Step" : "New Step"}
+                        </h4>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm text-gray-600">
+                              Sequence
+                            </label>
+                            <input
+                              type="number"
+                              className="border p-2 rounded w-full"
+                              value={editingDetail.sequence ?? ""}
+                              onChange={(e) =>
+                                setEditingDetail({
+                                  ...editingDetail,
+                                  sequence: Number(e.target.value),
+                                })
+                              }
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm text-gray-600">
+                              Type
+                            </label>
+                            <select
+                              className="border p-2 rounded w-full"
+                              value={
+                                editingDetail.type ?? KycDetailType.general
+                              }
+                              onChange={(e) =>
+                                setEditingDetail({
+                                  ...editingDetail,
+                                  type: toEnum(KycDetailType, e.target.value),
+                                })
+                              }
+                            >
+                              {kycTypeOptions.map((opt) => (
+                                <option key={opt.value} value={opt.value}>
+                                  {opt.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm text-gray-600">
+                              Step Title
+                            </label>
+                            <input
+                              type="text"
+                              className="border p-2 rounded w-full"
+                              value={editingDetail.step ?? ""}
+                              onChange={(e) =>
+                                setEditingDetail({
+                                  ...editingDetail,
+                                  step: e.target.value,
+                                })
+                              }
+                            />
+                          </div>
+
+                          <div className="col-span-2">
+                            <label className="block text-sm text-gray-600">
+                              Description
+                            </label>
+                            <textarea
+                              className="border p-2 rounded w-full"
+                              rows={3}
+                              value={editingDetail.description ?? ""}
+                              onChange={(e) =>
+                                setEditingDetail({
+                                  ...editingDetail,
+                                  description: e.target.value,
+                                })
+                              }
+                            />
+                          </div>
+
+                          <div className="col-span-2 flex gap-2 justify-end mt-2">
+                            <button
+                              onClick={handleCancelDetailEdit}
+                              className="px-3 py-2 rounded bg-gray-200"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={handleSaveDetail}
+                              className="px-3 py-2 rounded bg-green-600 text-white"
+                            >
+                              Save Step
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-gray-500">Attachments</p>
-                        <p className="font-medium">
-                          {detail.hasAttachments && detail.attachments
-                            ? `${detail.attachments.length} file(s)`
-                            : "None"}
-                        </p>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 ))}
-            </div>
-          )}
-
-          {/* Inline detail editor */}
-          {editingDetail && (
-            <div className="bg-white rounded-xl p-4 shadow mt-4">
-              <h4 className="font-semibold mb-2">
-                {editingDetail.id ? "Edit Step" : "New Step"}
-              </h4>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-gray-600">
-                    Sequence
-                  </label>
-                  <input
-                    type="number"
-                    className="border p-2 rounded w-full"
-                    value={editingDetail.sequence ?? ""}
-                    onChange={(e) =>
-                      setEditingDetail({
-                        ...editingDetail,
-                        sequence: Number(e.target.value),
-                      })
-                    }
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm text-gray-600">Type</label>
-                  <select
-                    className="border p-2 rounded w-full"
-                    value={editingDetail.type ?? KycDetailType.general}
-                    onChange={(e) =>
-                      setEditingDetail({
-                        ...editingDetail,
-                        type: toEnum(KycDetailType, e.target.value),
-                      })
-                    }
-                  >
-                    {kycTypeOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm text-gray-600">
-                    Step Title
-                  </label>
-                  <input
-                    type="text"
-                    className="border p-2 rounded w-full"
-                    value={editingDetail.step ?? ""}
-                    onChange={(e) =>
-                      setEditingDetail({
-                        ...editingDetail,
-                        step: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-
-                {/* <div>
-                  <label className="block text-sm text-gray-600">Status</label>
-                  <select
-                    className="border p-2 rounded w-full"
-                    value={editingDetail.status ?? KYCStatus.NotSubmitted}
-                    onChange={(e) =>
-                      setEditingDetail({
-                        ...editingDetail,
-                        status: toEnum(KYCStatus, e.target.value),
-                      })
-                    }
-                  >
-                    {kycStatusOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </div> */}
-
-                <div className="col-span-2">
-                  <label className="block text-sm text-gray-600">
-                    Description
-                  </label>
-                  <textarea
-                    className="border p-2 rounded w-full"
-                    rows={3}
-                    value={editingDetail.description ?? ""}
-                    onChange={(e) =>
-                      setEditingDetail({
-                        ...editingDetail,
-                        description: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-
-                <div className="col-span-2 flex gap-2 justify-end mt-2">
-                  <button
-                    onClick={handleCancelDetailEdit}
-                    className="px-3 py-2 rounded bg-gray-200"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSaveDetail}
-                    className="px-3 py-2 rounded bg-green-600 text-white"
-                  >
-                    Save Step
-                  </button>
-                </div>
-              </div>
             </div>
           )}
         </div>

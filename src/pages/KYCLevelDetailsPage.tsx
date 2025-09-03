@@ -82,8 +82,6 @@ const KYCLevelDetailsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!id) return;
-
     if (!id || id === "new") {
       setLevel({
         id: "",

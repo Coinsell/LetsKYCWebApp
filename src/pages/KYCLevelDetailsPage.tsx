@@ -292,6 +292,35 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
     }
   }
 
+  async function handleReorder(newOrder: KYCDetail[]) {
+    setLevelDetails((prev) => {
+      const resequenced = resequence(newOrder);
+
+      // persist changes in background
+      (async () => {
+        const changed = resequenced.filter((newItem, idx) => {
+          const oldItem = prev.find((o) => o.id === newItem.id);
+          return oldItem && oldItem.sequence !== newItem.sequence;
+        });
+
+        if (changed.length > 0) {
+          try {
+            await Promise.all(
+              changed.map((d) =>
+                kycDetailsApi.update(d.id, { ...d, sequence: d.sequence })
+              )
+            );
+          } catch (err) {
+            console.error("Failed to update sequence", err);
+            setError("Failed to save sequence");
+          }
+        }
+      })();
+
+      return resequenced;
+    });
+  }
+
   if (loading) return <div className="p-6 text-gray-500">Loading...</div>;
   if (error || !level)
     return (
@@ -613,7 +642,8 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
             <SortableList<KYCDetail>
               items={[...levelDetails].sort((a, b) => a.sequence - b.sequence)}
               getId={(d) => String(d.id)}
-              onReorder={(newOrder) => setLevelDetails(newOrder)}
+              // onReorder={(newOrder) => setLevelDetails(newOrder)}
+              onReorder={handleReorder}
             >
               {(detail, { attributes, listeners }) => (
                 <div

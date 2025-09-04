@@ -733,7 +733,8 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
                       {...listeners}
                       className="cursor-grab p-2 mr-3 text-gray-400 hover:text-gray-600 flex items-center"
                     >
-                      {/* <GripVertical className="h-5 w-5" /> */}☰
+                      <GripVertical className="h-5 w-5" />
+                      {/* ☰ */}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">

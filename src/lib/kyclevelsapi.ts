@@ -8,4 +8,6 @@ export const kycLevelsApi = {
   update: (id: string, data: Partial<KYCLevel>) =>
     api.put<KYCLevel>(`kyc_levels/${id}`, data),
   delete: (id: string) => api.delete<void>(`kyc_levels/${id}`),
+  deleteWithDetails: (id: string) =>
+    api.delete<void>(`kyc_levels/${id}/cascade`),
 };

@@ -10,7 +10,16 @@ import {
 import { useParams, useNavigate } from "react-router-dom";
 import { kycLevelsApi } from "../lib/kyclevelsapi";
 import { kycDetailsApi } from "@/lib/kycdetailsapi";
-import { GripVertical, Pencil, Plus, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  GripVertical,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Save,
+  Trash2,
+  X,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { SortableList } from "@/components/common/SortableList";
 
@@ -173,6 +182,23 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
 
   function handleEditLevel() {
     setEditingLevel(level);
+  }
+
+  async function handleDeleteLevel() {
+    if (!level?.id) return;
+
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this KYC Level and all its details?"
+    );
+    if (!confirmed) return;
+
+    try {
+      await kycLevelsApi.deleteWithDetails(level.id);
+      navigate("/admin/kyc-levels"); // ✅ go back to levels list after delete
+    } catch (err: any) {
+      console.error("Failed to delete KYC Level:", err);
+      setError(err?.message || "Failed to delete level");
+    }
   }
 
   // --- KYC Detail Functions (unchanged) ---
@@ -342,9 +368,42 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
     label: kycDetailTypeLabels[v as KycDetailType] || v,
   }));
 
+  function handleBack() {
+    navigate(-1);
+  }
+
   // --- Render ---
   return (
     <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between mb-6">
+        {/* Left side: Back button */}
+        <button
+          onClick={handleBack}
+          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          {/* Back */}
+        </button>
+
+        {/* Right side: Actions */}
+        <div className="flex gap-2">
+          <button
+            onClick={handleDeleteLevel}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
+          >
+            <Trash2 className="w-4 h-4" />
+            {/* Delete Level */}
+          </button>
+          <button
+            // onClick={handleRefresh}
+            onClick={() => window.location.reload()}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-100"
+          >
+            <RefreshCw className="w-4 h-4" />
+            {/* Refresh */}
+          </button>
+        </div>
+      </div>
       {/* --- Level Card / Form --- */}
       <div className="bg-white shadow rounded-2xl p-6 space-y-3">
         {editingLevel ? (
@@ -460,16 +519,18 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
             <div className="pt-4 flex gap-2">
               {!isNewRoute && (
                 <button
-                  className="px-4 py-2 bg-gray-200 rounded"
                   onClick={() => setEditingLevel(null)}
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100"
                 >
+                  <X className="w-4 h-4" />
                   Cancel
                 </button>
               )}
               <button
-                className="px-4 py-2 bg-green-600 text-white rounded"
                 onClick={handleSaveLevel}
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700"
               >
+                <Save className="w-4 h-4" />
                 Save Level
               </button>
             </div>
@@ -509,9 +570,10 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
             </div>
             <div className="pt-4">
               <button
-                className="bg-blue-600 text-white px-4 py-2 rounded-xl shadow hover:bg-blue-700 transition"
                 onClick={handleEditLevel}
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-100"
               >
+                <Pencil className="w-4 h-4" />
                 Edit Level
               </button>
             </div>
@@ -531,12 +593,6 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
               >
                 <Plus className="h-4 w-4" />
                 Add Step
-              </button>
-              <button
-                className="bg-gray-200 px-3 py-2 rounded-lg text-sm"
-                onClick={() => window.location.reload()}
-              >
-                Refresh
               </button>
             </div>
           </div>
@@ -618,7 +674,7 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
                   />
                 </div>
 
-                <div className="col-span-2 flex gap-2 justify-end mt-2">
+                {/* <div className="col-span-2 flex gap-2 justify-end mt-2">
                   <button
                     onClick={handleCancelDetailEdit}
                     className="px-3 py-2 rounded bg-gray-200"
@@ -629,6 +685,23 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
                     onClick={handleSaveDetail}
                     className="px-3 py-2 rounded bg-green-600 text-white"
                   >
+                    Save Step
+                  </button>
+                </div> */}
+
+                <div className="col-span-2 flex gap-2 justify-end mt-4">
+                  <button
+                    onClick={handleCancelDetailEdit}
+                    className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100"
+                  >
+                    <X className="w-4 h-4" />
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveDetail}
+                    className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700"
+                  >
+                    <Save className="w-4 h-4" />
                     Save Step
                   </button>
                 </div>
@@ -891,7 +964,7 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
                           />
                         </div>
 
-                        <div className="col-span-2 flex gap-2 justify-end mt-2">
+                        {/* <div className="col-span-2 flex gap-2 justify-end mt-2">
                           <button
                             onClick={handleCancelDetailEdit}
                             className="px-3 py-2 rounded bg-gray-200"
@@ -902,6 +975,23 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
                             onClick={handleSaveDetail}
                             className="px-3 py-2 rounded bg-green-600 text-white"
                           >
+                            Save Step
+                          </button>
+                        </div> */}
+
+                        <div className="col-span-2 flex gap-2 justify-end mt-4">
+                          <button
+                            onClick={handleCancelDetailEdit}
+                            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100"
+                          >
+                            <X className="w-4 h-4" />
+                            Cancel
+                          </button>
+                          <button
+                            onClick={handleSaveDetail}
+                            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700"
+                          >
+                            <Save className="w-4 h-4" />
                             Save Step
                           </button>
                         </div>

@@ -80,6 +80,12 @@ function toEnum<E extends Record<string, string>>(
   return vals[0] as unknown as E[keyof E];
 }
 
+function resequence(details: KYCDetail[]): KYCDetail[] {
+  return details
+    .sort((a, b) => a.sequence - b.sequence)
+    .map((d, idx) => ({ ...d, sequence: idx + 1 }));
+}
+
 interface Props {
   mode?: "create" | "edit";
 }
@@ -254,9 +260,32 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
 
   async function handleDeleteDetail(idToDelete: string, kycLevelId: string) {
     if (!confirm("Delete this detail?")) return;
+
     try {
       await kycDetailsApi.delete(idToDelete, kycLevelId);
-      setLevelDetails((prev) => prev.filter((d) => d.id !== idToDelete));
+
+      setLevelDetails((prev) => {
+        const remaining = prev.filter((d) => d.id !== idToDelete);
+        const resequenced = resequence(remaining);
+
+        // persist updates in background
+        (async () => {
+          const changed = resequenced.filter((newItem, idx) => {
+            const oldItem = remaining[idx];
+            return oldItem && oldItem.sequence !== newItem.sequence;
+          });
+
+          if (changed.length > 0) {
+            await Promise.all(
+              changed.map((d) =>
+                kycDetailsApi.update(d.id, { ...d, sequence: d.sequence })
+              )
+            );
+          }
+        })();
+
+        return resequenced;
+      });
     } catch (err: any) {
       console.error(err);
       setError(err?.message || "Failed to delete detail");

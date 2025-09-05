@@ -163,6 +163,15 @@ export function KYCLevelsPage() {
       level.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  function formatCurrency(amount?: number | null) {
+    if (amount == null) return "N/A";
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 0,
+    }).format(amount);
+  }
+
   // if (loading) return <LoadingSpinner />;
 
   return (
@@ -230,11 +239,11 @@ export function KYCLevelsPage() {
                     </p>
                     <div className="flex gap-4 text-sm text-neutral-500">
                       <span>
-                        Max Deposit: ${level.maxDepositAmount?.toLocaleString()}
+                        Max Deposit: {formatCurrency(level.maxDepositAmount)}
                       </span>
                       <span>
-                        Max Withdrawal: $
-                        {level.maxWithdrawalAmount?.toLocaleString()}
+                        Max Withdrawal:{" "}
+                        {formatCurrency(level.maxWithdrawalAmount)}
                       </span>
                       <span>
                         Duration: {level.duration} {level.timeUnit}
@@ -242,13 +251,13 @@ export function KYCLevelsPage() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button
+                    {/* <Button
                       variant="outline"
                       size="sm"
                       title="Manage KYC Details"
                     >
                       <Settings className="h-4 w-4" />
-                    </Button>
+                    </Button> */}
                     <Button
                       variant="outline"
                       size="sm"

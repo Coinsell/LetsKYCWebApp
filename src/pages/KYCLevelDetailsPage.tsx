@@ -643,6 +643,45 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
                   </select>
                 </div>
 
+                {/* KYC Status */}
+                <div>
+                  <label className="block text-sm text-gray-600">Status</label>
+                  <select
+                    className="border p-2 rounded w-full"
+                    value={editingDetail.status ?? KYCStatus.NotSubmitted}
+                    onChange={(e) =>
+                      setEditingDetail({
+                        ...editingDetail,
+                        status: toEnum(KYCStatus, e.target.value),
+                      })
+                    }
+                  >
+                    {Object.entries(kycStatusLabels).map(([key, label]) => (
+                      <option key={key} value={key}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Upload Document */}
+                <div>
+                  <label className="inline-flex items-center gap-2 text-sm text-gray-600">
+                    <input
+                      type="checkbox"
+                      className="rounded border-gray-300"
+                      checked={editingDetail.hasAttachments ?? false}
+                      onChange={(e) =>
+                        setEditingDetail({
+                          ...editingDetail,
+                          hasAttachments: e.target.checked,
+                        })
+                      }
+                    />
+                    Upload Document
+                  </label>
+                </div>
+
                 <div>
                   <label className="block text-sm text-gray-600">
                     Step Title

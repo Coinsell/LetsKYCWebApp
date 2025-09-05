@@ -13,6 +13,7 @@ import { kycDetailsApi } from "@/lib/kycdetailsapi";
 import {
   ArrowLeft,
   GripVertical,
+  Paperclip,
   Pencil,
   Plus,
   RefreshCw,
@@ -759,12 +760,12 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
                       <p className="text-gray-600 mb-2">{detail.description}</p>
                       <div className="flex gap-6 text-sm text-gray-500">
                         <span>Type: {kycDetailTypeLabels[detail.type]}</span>
-                        <span>
-                          Attachments:{" "}
-                          {detail.hasAttachments && detail.attachments?.length
-                            ? `${detail.attachments.length} file(s)`
-                            : "None"}
-                        </span>
+                        {detail.hasAttachments && (
+                          <span className="flex items-center gap-1">
+                            <Paperclip className="h-4 w-4 text-blue-600" />
+                            {`Upload Document`}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="flex gap-2 ml-4">
@@ -827,6 +828,23 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
                               </option>
                             ))}
                           </select>
+                        </div>
+
+                        <div>
+                          <label className="inline-flex items-center gap-2 text-sm text-gray-600">
+                            <input
+                              type="checkbox"
+                              className="rounded border-gray-300"
+                              checked={editingDetail.hasAttachments ?? false}
+                              onChange={(e) =>
+                                setEditingDetail({
+                                  ...editingDetail,
+                                  hasAttachments: e.target.checked,
+                                })
+                              }
+                            />
+                            Upload Document
+                          </label>
                         </div>
 
                         <div>

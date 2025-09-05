@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { SortableList } from "@/components/common/SortableList";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 // Enum-label maps
 const kycStatusLabels: Record<KYCStatus, string> = {
@@ -50,7 +51,6 @@ const kycDetailTypeLabels: Record<KycDetailType, string> = {
   occupation: "Occupation",
   pepDeclaration: "PEP Declaration",
   [KycDetailType.userInfo]: "User Info",
-  [KycDetailType.mobileOtp]: "Mobile OTP",
   [KycDetailType.aadhaar]: "Aadhaar",
   [KycDetailType.pan]: "PAN",
   [KycDetailType.liveliness]: "Liveliness Check",
@@ -347,7 +347,9 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
     });
   }
 
-  if (loading) return <div className="p-6 text-gray-500">Loading...</div>;
+  // if (loading) return <div className="p-6 text-gray-500">Loading...</div>;
+  if (loading) return <LoadingSpinner />;
+
   if (error || !level)
     return (
       <div className="p-6 text-red-500 font-medium">
@@ -538,7 +540,7 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
         ) : (
           <>
             <h2 className="text-2xl font-bold">
-              KYC Level: <span className="text-blue-600">{level.code}</span>
+              KYC Level: <span className="text-[#ff3547]">{level.code}</span>
             </h2>
             <p className="text-gray-700">{level.description}</p>
             <span

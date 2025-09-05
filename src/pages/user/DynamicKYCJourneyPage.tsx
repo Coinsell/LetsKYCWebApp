@@ -69,7 +69,7 @@ export function DynamicKYCJourneyPage() {
           sequence: 2,
           step: "Mobile Verification",
           description: "Verify your phone number with OTP",
-          type: KycDetailType.mobileOtp,
+          type: KycDetailType.phoneNo,
           status: KYCStatus.NotSubmitted,
           hasAttachments: false,
         },
@@ -162,7 +162,7 @@ export function DynamicKYCJourneyPage() {
             {...props}
           />
         );
-      case KycDetailType.mobileOtp:
+      case KycDetailType.phoneNo:
         return (
           <MobileOTPStep
             onNext={() => {
@@ -222,7 +222,7 @@ export function DynamicKYCJourneyPage() {
   //   switch (step.type) {
   //     case KycDetailType.userInfo:
   //       return <UserInfoStep onNext={handleNext} {...props} />;
-  //     case KycDetailType.mobileOtp:
+  //     case KycDetailType.phoneNo:
   //       return (
   //         <MobileOTPStep onNext={handleNext} onBack={handleBack} {...props} />
   //       );

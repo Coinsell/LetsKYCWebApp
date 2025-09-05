@@ -98,7 +98,6 @@ export enum KycDetailType {
   occupation = "occupation",
   pepDeclaration = "pepDeclaration",
   userInfo = "userInfo",
-  mobileOtp = "mobileOtp",
   aadhaar = "aadhaar",
   pan = "pan",
   liveliness = "liveliness",

@@ -16,9 +16,9 @@ import {
   TimeUnit,
 } from "../contexts/KYCAdminContext";
 import { Plus, Pencil, Trash2 } from "lucide-react";
-// import { KYCLevelModal } from "../components/modals/KYCLevelModal";
 import { useNavigate } from "react-router-dom";
 import { kycLevelsApi } from "../lib/kyclevelsapi";
+import { LoadingSpinner } from "../components/ui/loading-spinner"; // ✅ import
 
 export function KYCLevelsPage() {
   const { state, dispatch } = useKYCAdmin();
@@ -91,7 +91,6 @@ export function KYCLevelsPage() {
     navigate(`/admin/kyc-levels/${level.id}`, { state: { level } });
   };
 
-  // Save (create or update)
   const handleSave = async (level: Partial<KYCLevel>) => {
     try {
       if (editingLevel) {
@@ -110,7 +109,6 @@ export function KYCLevelsPage() {
     }
   };
 
-  // Delete
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this KYC level?")) {
       try {
@@ -159,6 +157,11 @@ export function KYCLevelsPage() {
       level.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
       level.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // show spinner when loading
+  if (state.loading) {
+    return <LoadingSpinner size="lg" />;
+  }
 
   return (
     <div className="space-y-6">

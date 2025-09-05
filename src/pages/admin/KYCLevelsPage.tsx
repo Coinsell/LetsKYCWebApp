@@ -18,10 +18,12 @@ import {
 import { Plus, Pencil, Trash2, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { kycLevelsApi } from "@/lib/kyclevelsapi";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 // import { KYCLevelModal } from "../../components/modals/KYCLevelModal";
 
 export function KYCLevelsPage() {
   const { state, dispatch } = useKYCAdmin();
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -33,14 +35,14 @@ export function KYCLevelsPage() {
   }, []);
 
   const loadLevels = async () => {
-    dispatch({ type: "SET_LOADING", payload: true });
+    setLoading(true);
     try {
       const levels = await kycLevelsApi.list();
       dispatch({ type: "SET_KYC_LEVELS", payload: levels });
     } catch (error) {
       dispatch({ type: "SET_ERROR", payload: "Failed to fetch KYC levels" });
     } finally {
-      dispatch({ type: "SET_LOADING", payload: false });
+      setLoading(false);
     }
   };
 
@@ -161,6 +163,8 @@ export function KYCLevelsPage() {
       level.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // if (loading) return <LoadingSpinner />;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -197,74 +201,78 @@ export function KYCLevelsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {filteredLevels.map((level) => (
-              <div
-                key={level.id}
-                className="flex items-center justify-between p-4 border border-neutral-200 dark:border-neutral-700 rounded-lg"
-              >
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="font-semibold text-lg">{level.code}</h3>
-                    <Badge
-                      variant={
-                        level.status === KYCStatus.Approved
-                          ? "success"
-                          : level.status === KYCStatus.Rejected
-                          ? "destructive"
-                          : "warning"
-                      }
+          {loading ? (
+            <LoadingSpinner fullscreen={false} />
+          ) : (
+            <div className="space-y-4">
+              {filteredLevels.map((level) => (
+                <div
+                  key={level.id}
+                  className="flex items-center justify-between p-4 border border-neutral-200 dark:border-neutral-700 rounded-lg"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="font-semibold text-lg">{level.code}</h3>
+                      <Badge
+                        variant={
+                          level.status === KYCStatus.Approved
+                            ? "success"
+                            : level.status === KYCStatus.Rejected
+                            ? "destructive"
+                            : "warning"
+                        }
+                      >
+                        {level.status}
+                      </Badge>
+                    </div>
+                    <p className="text-neutral-600 dark:text-neutral-400 mb-2">
+                      {level.description}
+                    </p>
+                    <div className="flex gap-4 text-sm text-neutral-500">
+                      <span>
+                        Max Deposit: ${level.maxDepositAmount?.toLocaleString()}
+                      </span>
+                      <span>
+                        Max Withdrawal: $
+                        {level.maxWithdrawalAmount?.toLocaleString()}
+                      </span>
+                      <span>
+                        Duration: {level.duration} {level.timeUnit}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      title="Manage KYC Details"
                     >
-                      {level.status}
-                    </Badge>
-                  </div>
-                  <p className="text-neutral-600 dark:text-neutral-400 mb-2">
-                    {level.description}
-                  </p>
-                  <div className="flex gap-4 text-sm text-neutral-500">
-                    <span>
-                      Max Deposit: ${level.maxDepositAmount?.toLocaleString()}
-                    </span>
-                    <span>
-                      Max Withdrawal: $
-                      {level.maxWithdrawalAmount?.toLocaleString()}
-                    </span>
-                    <span>
-                      Duration: {level.duration} {level.timeUnit}
-                    </span>
+                      <Settings className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEdit(level)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDelete(level.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    title="Manage KYC Details"
-                  >
-                    <Settings className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEdit(level)}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDelete(level.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+              ))}
+              {filteredLevels.length === 0 && (
+                <div className="text-center py-8">
+                  <p className="text-neutral-500">No KYC levels found</p>
                 </div>
-              </div>
-            ))}
-            {filteredLevels.length === 0 && (
-              <div className="text-center py-8">
-                <p className="text-neutral-500">No KYC levels found</p>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 

@@ -18,11 +18,12 @@ import {
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { kycLevelsApi } from "../lib/kyclevelsapi";
-import { LoadingSpinner } from "../components/ui/loading-spinner"; // ✅ import
+import { LoadingSpinner } from "../components/ui/loading-spinner";
 
 export function KYCLevelsPage() {
   const { state, dispatch } = useKYCAdmin();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLevel, setEditingLevel] = useState<KYCLevel | null>(null);
@@ -32,15 +33,28 @@ export function KYCLevelsPage() {
     //fetchKYCLevels();
   }, []);
 
+  // const loadLevels = async () => {
+  //   dispatch({ type: "SET_LOADING", payload: true });
+  //   try {
+  //     const levels = await kycLevelsApi.list();
+  //     dispatch({ type: "SET_KYC_LEVELS", payload: levels });
+  //   } catch (error) {
+  //     dispatch({ type: "SET_ERROR", payload: "Failed to fetch KYC levels" });
+  //   } finally {
+  //     dispatch({ type: "SET_LOADING", payload: false });
+  //   }
+  // };
+
   const loadLevels = async () => {
-    dispatch({ type: "SET_LOADING", payload: true });
     try {
+      setLoading(true);
       const levels = await kycLevelsApi.list();
+      await new Promise((res) => setTimeout(res, 300));
       dispatch({ type: "SET_KYC_LEVELS", payload: levels });
     } catch (error) {
       dispatch({ type: "SET_ERROR", payload: "Failed to fetch KYC levels" });
     } finally {
-      dispatch({ type: "SET_LOADING", payload: false });
+      setLoading(false);
     }
   };
 
@@ -159,9 +173,7 @@ export function KYCLevelsPage() {
   );
 
   // show spinner when loading
-  if (state.loading) {
-    return <LoadingSpinner size="lg" />;
-  }
+  if (loading) return <LoadingSpinner fullscreen={false} />;
 
   return (
     <div className="space-y-6">

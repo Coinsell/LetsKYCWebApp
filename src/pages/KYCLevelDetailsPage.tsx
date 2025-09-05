@@ -785,110 +785,6 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
                     </div>
                   </div>
 
-                  {/* Inline editor right below the step */}
-                  {/* {editingDetail?.id === detail.id && ( */}
-                  {/* {editingDetail &&
-                      (!editingDetail.id || editingDetail.id === detail.id) && ( */}
-                  {/* {editingDetail && !editingDetail.id && (
-                      <div className="bg-white rounded-xl p-4 shadow">
-                        <h4 className="font-semibold mb-2">
-                          {editingDetail.id ? "Edit Step" : "New Step"}
-                        </h4>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm text-gray-600">
-                              Sequence
-                            </label>
-                            <input
-                              type="number"
-                              className="border p-2 rounded w-full"
-                              value={editingDetail.sequence ?? ""}
-                              onChange={(e) =>
-                                setEditingDetail({
-                                  ...editingDetail,
-                                  sequence: Number(e.target.value),
-                                })
-                              }
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-sm text-gray-600">
-                              Type
-                            </label>
-                            <select
-                              className="border p-2 rounded w-full"
-                              value={
-                                editingDetail.type ?? KycDetailType.general
-                              }
-                              onChange={(e) =>
-                                setEditingDetail({
-                                  ...editingDetail,
-                                  type: toEnum(KycDetailType, e.target.value),
-                                })
-                              }
-                            >
-                              {kycTypeOptions.map((opt) => (
-                                <option key={opt.value} value={opt.value}>
-                                  {opt.label}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-
-                          <div>
-                            <label className="block text-sm text-gray-600">
-                              Step Title
-                            </label>
-                            <input
-                              type="text"
-                              className="border p-2 rounded w-full"
-                              value={editingDetail.step ?? ""}
-                              onChange={(e) =>
-                                setEditingDetail({
-                                  ...editingDetail,
-                                  step: e.target.value,
-                                })
-                              }
-                            />
-                          </div>
-
-                          <div className="col-span-2">
-                            <label className="block text-sm text-gray-600">
-                              Description
-                            </label>
-                            <textarea
-                              className="border p-2 rounded w-full"
-                              rows={3}
-                              value={editingDetail.description ?? ""}
-                              onChange={(e) =>
-                                setEditingDetail({
-                                  ...editingDetail,
-                                  description: e.target.value,
-                                })
-                              }
-                            />
-                          </div>
-
-                          <div className="col-span-2 flex gap-2 justify-end mt-2">
-                            <button
-                              onClick={handleCancelDetailEdit}
-                              className="px-3 py-2 rounded bg-gray-200"
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              onClick={handleSaveDetail}
-                              className="px-3 py-2 rounded bg-green-600 text-white"
-                            >
-                              Save Step
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )} */}
-
                   {editingDetail?.id === detail.id && (
                     <div className="bg-white rounded-xl p-4 shadow mb-4">
                       <h4 className="font-semibold mb-2">Edit Step</h4>
@@ -966,21 +862,6 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
                             }
                           />
                         </div>
-
-                        {/* <div className="col-span-2 flex gap-2 justify-end mt-2">
-                          <button
-                            onClick={handleCancelDetailEdit}
-                            className="px-3 py-2 rounded bg-gray-200"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            onClick={handleSaveDetail}
-                            className="px-3 py-2 rounded bg-green-600 text-white"
-                          >
-                            Save Step
-                          </button>
-                        </div> */}
 
                         <div className="col-span-2 flex gap-2 justify-end mt-4">
                           <button

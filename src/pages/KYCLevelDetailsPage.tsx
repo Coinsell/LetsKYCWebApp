@@ -791,6 +791,7 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
                       <h4 className="font-semibold mb-2">Edit Step</h4>
 
                       <div className="grid grid-cols-2 gap-4">
+                        {/* Sequence */}
                         <div>
                           <label className="block text-sm text-gray-600">
                             Sequence
@@ -808,6 +809,7 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
                           />
                         </div>
 
+                        {/* Type */}
                         <div>
                           <label className="block text-sm text-gray-600">
                             Type
@@ -830,6 +832,34 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
                           </select>
                         </div>
 
+                        {/* KYC Status */}
+                        <div>
+                          <label className="block text-sm text-gray-600">
+                            Status
+                          </label>
+                          <select
+                            className="border p-2 rounded w-full"
+                            value={
+                              editingDetail.status ?? KYCStatus.NotSubmitted
+                            }
+                            onChange={(e) =>
+                              setEditingDetail({
+                                ...editingDetail,
+                                status: toEnum(KYCStatus, e.target.value),
+                              })
+                            }
+                          >
+                            {Object.entries(kycStatusLabels).map(
+                              ([key, label]) => (
+                                <option key={key} value={key}>
+                                  {label}
+                                </option>
+                              )
+                            )}
+                          </select>
+                        </div>
+
+                        {/* Upload Document */}
                         <div>
                           <label className="inline-flex items-center gap-2 text-sm text-gray-600">
                             <input
@@ -847,6 +877,7 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
                           </label>
                         </div>
 
+                        {/* Step Title */}
                         <div>
                           <label className="block text-sm text-gray-600">
                             Step Title
@@ -864,6 +895,7 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
                           />
                         </div>
 
+                        {/* Description */}
                         <div className="col-span-2">
                           <label className="block text-sm text-gray-600">
                             Description
@@ -881,6 +913,7 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
                           />
                         </div>
 
+                        {/* Action Buttons */}
                         <div className="col-span-2 flex gap-2 justify-end mt-4">
                           <button
                             onClick={handleCancelDetailEdit}

@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   Home,
   ShieldCheck,
+  IdCard,
   Users,
   UserCheck,
   Settings,
@@ -29,7 +30,7 @@ interface AdminSidebarProps {
 const navigation = [
   { name: "Dashboard", href: "/admin/dashboard", icon: Home },
   { name: "KYC Levels", href: "/admin/kyc-levels", icon: ShieldCheck },
-  { name: "KYC Details", href: "/admin/kyc-details", icon: ShieldCheck },
+  { name: "KYC Details", href: "/admin/kyc-details", icon: IdCard },
   { name: "Users", href: "/admin/users", icon: Users },
   { name: "FIU India Sample", href: "/admin/fiu-india-sample", icon: FileText },
   { name: "Profile", href: "/admin/profile", icon: UserCheck },

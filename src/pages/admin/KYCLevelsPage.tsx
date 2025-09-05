@@ -128,10 +128,14 @@ export function KYCLevelsPage() {
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this KYC level?")) {
       try {
-        await kycLevelsApi.delete(id);
+        setLoading(true);
+        await kycLevelsApi.deleteWithDetails(id);
         dispatch({ type: "DELETE_KYC_LEVEL", payload: id });
+        loadLevels();
       } catch (error) {
         dispatch({ type: "SET_ERROR", payload: "Failed to delete KYC level" });
+      } finally {
+        setLoading(false);
       }
     }
   };

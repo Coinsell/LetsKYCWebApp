@@ -23,6 +23,7 @@ import {
   KycDetailType,
 } from "../contexts/KYCAdminContext";
 import { Plus, Pencil, Trash2, ArrowUp, ArrowDown } from "lucide-react";
+import { kycDetailsApi } from "../lib/kycdetailsapi";
 
 export function KYCDetailsPage() {
   const { state, dispatch } = useKYCAdmin();
@@ -36,54 +37,8 @@ export function KYCDetailsPage() {
   const fetchKYCDetails = async () => {
     dispatch({ type: "SET_LOADING", payload: true });
     try {
-      // Mock API call - replace with actual API
-      const mockDetails: KYCDetail[] = [
-        {
-          id: "1",
-          kycLevelId: "kyc-level-1",
-          sequence: 1,
-          step: "Personal Information",
-          description: "Collect basic personal information",
-          type: KycDetailType.general,
-          status: KYCStatus.Approved,
-          hasAttachments: false,
-          attachments: [],
-        },
-        {
-          id: "2",
-          kycLevelId: "kyc-level-1",
-          sequence: 2,
-          step: "Phone Verification",
-          description: "Verify phone number with OTP",
-          type: KycDetailType.phoneNo,
-          status: KYCStatus.Approved,
-          hasAttachments: false,
-          attachments: [],
-        },
-        {
-          id: "3",
-          kycLevelId: "kyc-level-1",
-          sequence: 3,
-          step: "Address Information",
-          description: "Collect address details",
-          type: KycDetailType.address,
-          status: KYCStatus.Approved,
-          hasAttachments: false,
-          attachments: [],
-        },
-        {
-          id: "4",
-          kycLevelId: "kyc-level-2",
-          sequence: 1,
-          step: "Identity Proof Upload",
-          description: "Upload government issued ID",
-          type: KycDetailType.identityProof,
-          status: KYCStatus.Approved,
-          hasAttachments: true,
-          attachments: [],
-        },
-      ];
-      dispatch({ type: "SET_KYC_DETAILS", payload: mockDetails });
+      const details = await kycDetailsApi.getAll();
+      dispatch({ type: "SET_KYC_DETAILS", payload: details });
     } catch (error) {
       dispatch({ type: "SET_ERROR", payload: "Failed to fetch KYC details" });
     } finally {
@@ -91,9 +46,10 @@ export function KYCDetailsPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string, kycLevelId: string) => {
     if (confirm("Are you sure you want to delete this KYC detail?")) {
       try {
+        await kycDetailsApi.delete(id, kycLevelId);
         dispatch({ type: "DELETE_KYC_DETAIL", payload: id });
       } catch (error) {
         dispatch({ type: "SET_ERROR", payload: "Failed to delete KYC detail" });
@@ -125,6 +81,7 @@ export function KYCDetailsPage() {
       sequence: detail.sequence,
     };
 
+    // NOTE: You may want to persist these swaps with an API update
     dispatch({ type: "UPDATE_KYC_DETAIL", payload: updatedDetail });
     dispatch({ type: "UPDATE_KYC_DETAIL", payload: updatedTarget });
   };
@@ -259,7 +216,7 @@ export function KYCDetailsPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleDelete(detail.id)}
+                    onClick={() => handleDelete(detail.id, detail.kycLevelId)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

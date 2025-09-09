@@ -49,7 +49,6 @@ export function KYCLevelsPage() {
     try {
       setLoading(true);
       const levels = await kycLevelsApi.list();
-      await new Promise((res) => setTimeout(res, 300));
       dispatch({ type: "SET_KYC_LEVELS", payload: levels });
     } catch (error) {
       dispatch({ type: "SET_ERROR", payload: "Failed to fetch KYC levels" });

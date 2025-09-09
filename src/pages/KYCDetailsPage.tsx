@@ -22,11 +22,15 @@ import {
   KYCStatus,
   KycDetailType,
 } from "../contexts/KYCAdminContext";
-import { Plus, Pencil, Trash2, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Pencil, Trash2, ArrowUp, ArrowDown, Layers } from "lucide-react";
 import { kycDetailsApi } from "../lib/kycdetailsapi";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { useParams, useNavigate } from "react-router-dom";
 
 export function KYCDetailsPage() {
   const { state, dispatch } = useKYCAdmin();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedKycLevel, setSelectedKycLevel] = useState<string>("all");
 
@@ -35,14 +39,14 @@ export function KYCDetailsPage() {
   }, []);
 
   const fetchKYCDetails = async () => {
-    dispatch({ type: "SET_LOADING", payload: true });
+    setLoading(true);
     try {
       const details = await kycDetailsApi.getAll();
       dispatch({ type: "SET_KYC_DETAILS", payload: details });
     } catch (error) {
       dispatch({ type: "SET_ERROR", payload: "Failed to fetch KYC details" });
     } finally {
-      dispatch({ type: "SET_LOADING", payload: false });
+      setLoading(false);
     }
   };
 
@@ -116,9 +120,10 @@ export function KYCDetailsPage() {
             Manage KYC steps and requirements for each level
           </p>
         </div>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add KYC Detail
+
+        <Button className="gap-2" onClick={() => navigate("/admin/kyc-levels")}>
+          <Layers className="h-4 w-4" />
+          Manage KYC Levels
         </Button>
       </div>
 
@@ -158,77 +163,83 @@ export function KYCDetailsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {filteredDetails.map((detail) => (
-              <div
-                key={detail.id}
-                className="flex items-center justify-between p-4 border border-neutral-200 rounded-lg"
-              >
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <Badge variant="outline" className="text-xs">
-                      {getKycLevelName(detail.kycLevelId)}
-                    </Badge>
-                    <Badge variant="secondary" className="text-xs">
-                      Step {detail.sequence}
-                    </Badge>
-                    <h3 className="font-semibold text-lg">{detail.step}</h3>
-                    <Badge
-                      variant={
-                        detail.status === KYCStatus.Approved
-                          ? "success"
-                          : detail.status === KYCStatus.Rejected
-                          ? "destructive"
-                          : "warning"
-                      }
+          {loading ? (
+            <LoadingSpinner fullscreen={false} />
+          ) : (
+            <div className="space-y-4">
+              {filteredDetails.map((detail) => (
+                <div
+                  key={detail.id}
+                  className="flex items-center justify-between p-4 border border-neutral-200 rounded-lg"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <Badge variant="outline" className="text-xs">
+                        {getKycLevelName(detail.kycLevelId)}
+                      </Badge>
+                      <Badge variant="secondary" className="text-xs">
+                        Step {detail.sequence}
+                      </Badge>
+                      <h3 className="font-semibold text-lg">{detail.step}</h3>
+                      <Badge
+                        variant={
+                          detail.status === KYCStatus.Approved
+                            ? "success"
+                            : detail.status === KYCStatus.Rejected
+                            ? "destructive"
+                            : "warning"
+                        }
+                      >
+                        {detail.status}
+                      </Badge>
+                    </div>
+                    <p className="text-neutral-600 mb-2">
+                      {detail.description}
+                    </p>
+                    <div className="flex gap-4 text-sm text-neutral-500">
+                      <span>Type: {detail.type}</span>
+                      <span>
+                        Attachments:{" "}
+                        {detail.hasAttachments ? "Required" : "Not Required"}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => moveSequence(detail.id, "up")}
+                      disabled={detail.sequence === 1}
                     >
-                      {detail.status}
-                    </Badge>
-                  </div>
-                  <p className="text-neutral-600 mb-2">{detail.description}</p>
-                  <div className="flex gap-4 text-sm text-neutral-500">
-                    <span>Type: {detail.type}</span>
-                    <span>
-                      Attachments:{" "}
-                      {detail.hasAttachments ? "Required" : "Not Required"}
-                    </span>
+                      <ArrowUp className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => moveSequence(detail.id, "down")}
+                    >
+                      <ArrowDown className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDelete(detail.id, detail.kycLevelId)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => moveSequence(detail.id, "up")}
-                    disabled={detail.sequence === 1}
-                  >
-                    <ArrowUp className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => moveSequence(detail.id, "down")}
-                  >
-                    <ArrowDown className="h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDelete(detail.id, detail.kycLevelId)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+              ))}
+              {filteredDetails.length === 0 && (
+                <div className="text-center py-8">
+                  <p className="text-neutral-500">No KYC details found</p>
                 </div>
-              </div>
-            ))}
-            {filteredDetails.length === 0 && (
-              <div className="text-center py-8">
-                <p className="text-neutral-500">No KYC details found</p>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

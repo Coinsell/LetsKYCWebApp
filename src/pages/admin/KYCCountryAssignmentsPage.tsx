@@ -14,32 +14,36 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { useKYCAdmin } from "@/contexts/KYCAdminContext";
+import { CountryKycAssignment, useKYCAdmin } from "@/contexts/KYCAdminContext";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { countryApi } from "@/lib/countryapi";
 import { countryKycAssignmentApi } from "@/lib/countrykycassignmentapi";
 import { kycLevelsApi } from "@/lib/kyclevelsapi";
 import { Pencil, Trash2, Plus } from "lucide-react";
 
+// --- View model for rows ---
+export interface CountryKycAssignmentView extends CountryKycAssignment {
+  countryName: string;
+  kycLevelCode?: string;
+}
+
 // --- Row components ---
 function AssignmentRowView({
-  country,
-  kycLevelCode,
+  assignment,
   onEdit,
   onDelete,
 }: {
-  country: any;
-  kycLevelCode?: string;
+  assignment: CountryKycAssignmentView;
   onEdit: () => void;
   onDelete?: () => void;
 }) {
   return (
     <div className="flex items-center justify-between p-4 border rounded-lg">
       <div className="flex flex-col">
-        <p className="font-medium">{country.name}</p>
-        <p className="text-sm text-neutral-500">{country.code}</p>
+        <p className="font-medium">{assignment.countryName}</p>
+        <p className="text-sm text-neutral-500">{assignment.countryCode}</p>
         <p className="text-sm text-neutral-700 dark:text-neutral-300 mt-1">
-          KYC Level: {kycLevelCode || "—"}
+          KYC Level: {assignment.kycLevelCode || "—"}
         </p>
       </div>
       <div className="flex items-center gap-2">
@@ -57,25 +61,23 @@ function AssignmentRowView({
 }
 
 function AssignmentRowEdit({
-  country,
-  assignedKycLevelId,
+  assignment,
   kycLevels,
   onSave,
   onCancel,
 }: {
-  country: any;
-  assignedKycLevelId?: string;
+  assignment: CountryKycAssignmentView;
   kycLevels: any[];
   onSave: (value: string) => void;
   onCancel: () => void;
 }) {
-  const [selected, setSelected] = useState(assignedKycLevelId || "");
+  const [selected, setSelected] = useState(assignment.kycLevelId || "");
 
   return (
     <div className="flex items-center justify-between p-4 border rounded-lg">
       <div className="flex flex-col">
-        <p className="font-medium">{country.name}</p>
-        <p className="text-sm text-neutral-500">{country.code}</p>
+        <p className="font-medium">{assignment.countryName}</p>
+        <p className="text-sm text-neutral-500">{assignment.countryCode}</p>
 
         <div className="mt-2">
           <Select value={selected} onValueChange={setSelected}>
@@ -105,13 +107,71 @@ function AssignmentRowEdit({
   );
 }
 
+function AssignmentRowNew({
+  countries,
+  kycLevels,
+  onSave,
+  onCancel,
+}: {
+  countries: { code: string; name: string }[];
+  kycLevels: any[];
+  onSave: (countryCode: string, kycLevelId: string) => void;
+  onCancel: () => void;
+}) {
+  const [newCountry, setNewCountry] = useState<string | null>(null);
+  const [newLevel, setNewLevel] = useState<string | null>(null);
+
+  return (
+    <div className="flex items-center justify-between p-4 border border-dashed rounded-lg">
+      <div className="flex items-center gap-4">
+        <Select onValueChange={setNewCountry} value={newCountry || ""}>
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="Select Country" />
+          </SelectTrigger>
+          <SelectContent>
+            {countries.map((c) => (
+              <SelectItem key={c.code} value={c.code}>
+                {c.name} ({c.code})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select onValueChange={setNewLevel} value={newLevel || ""}>
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="Select KYC Level" />
+          </SelectTrigger>
+          <SelectContent>
+            {kycLevels.map((l) => (
+              <SelectItem key={l.id} value={l.id}>
+                {l.code} – {l.description}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="flex gap-2">
+        <Button
+          onClick={() => newCountry && newLevel && onSave(newCountry, newLevel)}
+          disabled={!newCountry || !newLevel}
+        >
+          Save
+        </Button>
+        <Button variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 // --- Main page ---
 export function KYCCountryAssignmentsPage() {
   const { state, dispatch } = useKYCAdmin();
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState<string | null>(null); // countryCode or "new"
-  const [newCountry, setNewCountry] = useState<string | null>(null);
-  const [newLevel, setNewLevel] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -166,37 +226,51 @@ export function KYCCountryAssignmentsPage() {
       }
 
       setEditing(null);
-      setNewCountry(null);
-      setNewLevel(null);
     } catch (err) {
       console.error("Failed to assign KYC level", err);
     }
   };
 
-  const handleDelete = async (
-    countryCode: string,
-    assignedKycLevelId: string
-  ) => {
+  const handleDelete = async (assignment: CountryKycAssignment) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to remove the KYC assignment for ${assignment.countryCode}?`
+    );
+    if (!confirmed) return;
+
+    setDeletingId(assignment.id);
     try {
-      await countryKycAssignmentApi.delete(countryCode, assignedKycLevelId);
-      dispatch({ type: "DELETE_ASSIGNMENT", payload: countryCode });
+      await countryKycAssignmentApi.delete(assignment.id, assignment.countryCode);
+      dispatch({ type: "DELETE_ASSIGNMENT", payload: assignment.id });
     } catch (err) {
       console.error("Failed to delete KYC assignment", err);
+    } finally {
+      setDeletingId(null);
     }
   };
 
-  const countriesWithAssignments = state.countries.map((c) => {
-    const assignment = state.assignments.find(
-      (a) => a.countryCode === c.code && a.isActive
-    );
-    return {
-      ...c,
-      assignedKycLevelId: assignment?.kycLevelId,
-    };
-  });
+  // build enriched view
+  const countriesWithAssignments: CountryKycAssignmentView[] =
+    state.countries.map((c) => {
+      const assignment = state.assignments.find(
+        (a) => a.countryCode === c.code && a.isActive
+      );
+      const kycLevel = assignment
+        ? state.kycLevels.find((l) => l.id === assignment.kycLevelId)
+        : undefined;
 
-  const unassignedCountries = countriesWithAssignments.filter(
-    (c) => !c.assignedKycLevelId
+      return {
+        id: assignment?.id || "",
+        countryCode: c.code,
+        kycLevelId: assignment?.kycLevelId,
+        isActive: assignment?.isActive ?? true,
+        countryName: c.name,
+        kycLevelCode: kycLevel?.code,
+      };
+    });
+
+  const unassignedCountries = state.countries.filter(
+    (c) =>
+      !state.assignments.some((a) => a.countryCode === c.code && a.isActive)
   );
 
   return (
@@ -228,98 +302,43 @@ export function KYCCountryAssignmentsPage() {
             <LoadingSpinner fullscreen={false} />
           ) : (
             <div className="space-y-4">
-              {/* Add Assignment form */}
               {editing === "new" && (
-                <div className="flex items-center justify-between p-4 border border-dashed rounded-lg">
-                  <div className="flex items-center gap-4">
-                    <Select
-                      onValueChange={setNewCountry}
-                      value={newCountry || ""}
-                    >
-                      <SelectTrigger className="w-48">
-                        <SelectValue placeholder="Select Country" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {unassignedCountries.map((c) => (
-                          <SelectItem key={c.code} value={c.code}>
-                            {c.name} ({c.code})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-
-                    <Select onValueChange={setNewLevel} value={newLevel || ""}>
-                      <SelectTrigger className="w-48">
-                        <SelectValue placeholder="Select KYC Level" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {state.kycLevels.map((l) => (
-                          <SelectItem key={l.id} value={l.id}>
-                            {l.code} – {l.description}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() =>
-                        newCountry &&
-                        newLevel &&
-                        handleAssign(newCountry, newLevel)
-                      }
-                      disabled={!newCountry || !newLevel}
-                    >
-                      Save
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setEditing(null);
-                        setNewCountry(null);
-                        setNewLevel(null);
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
+                <AssignmentRowNew
+                  countries={unassignedCountries}
+                  kycLevels={state.kycLevels}
+                  onSave={handleAssign}
+                  onCancel={() => setEditing(null)}
+                />
               )}
 
-              {/* Assignment rows */}
-              {countriesWithAssignments.map((country) =>
-                editing === country.code ? (
+              {countriesWithAssignments.map((assignment) =>
+                editing === assignment.countryCode ? (
                   <AssignmentRowEdit
-                    key={country.id}
-                    country={country}
-                    assignedKycLevelId={country.assignedKycLevelId}
+                    key={assignment.countryCode}
+                    assignment={assignment}
                     kycLevels={state.kycLevels}
-                    onSave={(value) => handleAssign(country.code, value)}
+                    onSave={(value) =>
+                      handleAssign(assignment.countryCode, value)
+                    }
                     onCancel={() => setEditing(null)}
                   />
                 ) : (
-                  <AssignmentRowView
-                    key={country.id}
-                    country={country}
-                    kycLevelCode={
-                      country.assignedKycLevelId
-                        ? state.kycLevels.find(
-                            (l) => l.id === country.assignedKycLevelId
-                          )?.code
-                        : undefined
-                    }
-                    onEdit={() => setEditing(country.code)}
-                    onDelete={
-                      country.assignedKycLevelId
-                        ? () =>
-                            handleDelete(
-                              country.code,
-                              country.assignedKycLevelId!
-                            )
-                        : undefined
-                    }
-                  />
+                  <div className="relative" key={assignment.countryCode}>
+                    <AssignmentRowView
+                      assignment={assignment}
+                      onEdit={() => setEditing(assignment.countryCode)}
+                      onDelete={
+                        assignment.kycLevelId
+                          ? () => handleDelete(assignment)
+                          : undefined
+                      }
+                    />
+                    {deletingId === assignment.id && (
+                      <span className="text-sm text-neutral-500 ml-2 absolute top-4 right-4">
+                        Deleting...
+                      </span>
+                    )}
+                  </div>
                 )
               )}
 

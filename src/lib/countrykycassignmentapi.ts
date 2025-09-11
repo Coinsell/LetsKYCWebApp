@@ -24,11 +24,11 @@ export const countryKycAssignmentApi = {
   },
 
   delete: async (
-    countryCode: string,
-    assignmentId: string
+    assignmentId: string,
+    countryCode: string
   ): Promise<{ message: string }> => {
     return api.delete<{ message: string }>(
-      `/country_kyc_assignments/${countryCode}/${assignmentId}`
+      `/country_kyc_assignments/${assignmentId}/${countryCode}`
     );
   },
 };

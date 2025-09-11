@@ -33,7 +33,7 @@ const navigation = [
   { name: "KYC Levels", href: "/admin/kyc-levels", icon: ShieldCheck },
   { name: "KYC Details", href: "/admin/kyc-details", icon: IdCard },
   {
-    name: "Country KYC Assignments",
+    name: "KYC Rules",
     href: "/admin/country-kyc-levels",
     icon: Globe,
   },

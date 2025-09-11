@@ -11,6 +11,7 @@ import { AdminProfilePage } from "../../pages/admin/AdminProfilePage";
 import { FIUIndiaJourneyPage } from "../../pages/user/FIUIndiaJourneyPage";
 import { KYCDetailsPage } from "@/pages/KYCDetailsPage";
 import KYCLevelDetailsPage from "@/pages/KYCLevelDetailsPage";
+import { KYCCountryAssignmentsPage } from "@/pages/admin/KYCCountryAssignmentsPage";
 
 export function AdminLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // desktop only
@@ -74,6 +75,10 @@ export function AdminLayout() {
               <Route
                 path="*"
                 element={<Navigate to="/admin/dashboard" replace />}
+              />
+              <Route
+                path="/admin/country-kyc-levels"
+                element={<KYCCountryAssignmentsPage />}
               />
             </Routes>
           </div>

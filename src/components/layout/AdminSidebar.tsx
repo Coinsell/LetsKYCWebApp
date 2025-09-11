@@ -10,6 +10,7 @@ import {
   ChevronRight,
   FileText,
   X,
+  Globe,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
@@ -31,6 +32,11 @@ const navigation = [
   { name: "Dashboard", href: "/admin/dashboard", icon: Home },
   { name: "KYC Levels", href: "/admin/kyc-levels", icon: ShieldCheck },
   { name: "KYC Details", href: "/admin/kyc-details", icon: IdCard },
+  {
+    name: "Country KYC Assignments",
+    href: "/admin/country-kyc-levels",
+    icon: Globe,
+  },
   { name: "Users", href: "/admin/users", icon: Users },
   { name: "FIU India Sample", href: "/admin/fiu-india-sample", icon: FileText },
   { name: "Profile", href: "/admin/profile", icon: UserCheck },

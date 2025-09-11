@@ -145,6 +145,8 @@ export interface Attachment {
 }
 
 export interface KYCAdminState {
+  countries: Country[];
+  assignments: CountryKycAssignment[];
   kycLevels: KYCLevel[];
   kycDetails: KYCDetail[];
   users: User[];
@@ -155,7 +157,34 @@ export interface KYCAdminState {
   error: string | null;
 }
 
+// --------------------- Country ---------------------
+export interface Country {
+  id: string;
+  sequence: number;
+  code: string;
+  name: string;
+  isRegistrationRestricted: boolean;
+}
+
+// --------------------- Country KYC Assignment ---------------------
+export interface CountryKycAssignment {
+  id: string;
+  countryCode: string;
+  kycLevelId: string;
+  isActive: boolean;
+}
+
 type KYCAdminAction =
+  // Countries
+  | { type: "SET_COUNTRIES"; payload: Country[] }
+  | { type: "ADD_COUNTRY"; payload: Country }
+  | { type: "UPDATE_COUNTRY"; payload: Country }
+  | { type: "DELETE_COUNTRY"; payload: string }
+  // Assignments
+  | { type: "SET_ASSIGNMENTS"; payload: CountryKycAssignment[] }
+  | { type: "ADD_ASSIGNMENT"; payload: CountryKycAssignment }
+  | { type: "UPDATE_ASSIGNMENT"; payload: CountryKycAssignment }
+  | { type: "DELETE_ASSIGNMENT"; payload: string }
   | { type: "SET_LOADING"; payload: boolean }
   | { type: "SET_ERROR"; payload: string | null }
   | { type: "SET_KYC_LEVELS"; payload: KYCLevel[] }
@@ -190,6 +219,8 @@ const initialState: KYCAdminState = {
   userKycUpdates: [],
   loading: false,
   error: null,
+  countries: [],
+  assignments: [],
 };
 
 function kycAdminReducer(
@@ -197,6 +228,42 @@ function kycAdminReducer(
   action: KYCAdminAction
 ): KYCAdminState {
   switch (action.type) {
+    // Countries
+    case "SET_COUNTRIES":
+      return { ...state, countries: action.payload };
+    case "ADD_COUNTRY":
+      return { ...state, countries: [...state.countries, action.payload] };
+    case "UPDATE_COUNTRY":
+      return {
+        ...state,
+        countries: state.countries.map((c) =>
+          c.id === action.payload.id ? action.payload : c
+        ),
+      };
+    case "DELETE_COUNTRY":
+      return {
+        ...state,
+        countries: state.countries.filter((c) => c.id !== action.payload),
+      };
+
+    // Assignments
+    case "SET_ASSIGNMENTS":
+      return { ...state, assignments: action.payload };
+    case "ADD_ASSIGNMENT":
+      return { ...state, assignments: [...state.assignments, action.payload] };
+    case "UPDATE_ASSIGNMENT":
+      return {
+        ...state,
+        assignments: state.assignments.map((a) =>
+          a.id === action.payload.id ? action.payload : a
+        ),
+      };
+    case "DELETE_ASSIGNMENT":
+      return {
+        ...state,
+        assignments: state.assignments.filter((a) => a.id !== action.payload),
+      };
+
     case "SET_LOADING":
       return { ...state, loading: action.payload };
     case "SET_ERROR":

@@ -38,7 +38,7 @@ function AssignmentRowView({
   onDelete?: () => void;
 }) {
   return (
-    <div className="flex items-center justify-between p-4 border rounded-lg">
+    <div className="flex items-center justify-between p-4 border border-neutral-200 rounded-lg">
       <div className="flex flex-col">
         <p className="font-medium">{assignment.countryName}</p>
         <p className="text-sm text-neutral-500">{assignment.countryCode}</p>
@@ -74,7 +74,7 @@ function AssignmentRowEdit({
   const [selected, setSelected] = useState(assignment.kycLevelId || "");
 
   return (
-    <div className="flex items-center justify-between p-4 border rounded-lg">
+    <div className="flex items-center justify-between p-4 border border-neutral-200 rounded-lg">
       <div className="flex flex-col">
         <p className="font-medium">{assignment.countryName}</p>
         <p className="text-sm text-neutral-500">{assignment.countryCode}</p>
@@ -197,6 +197,7 @@ export function KYCCountryAssignmentsPage() {
   };
 
   const handleAssign = async (countryCode: string, kycLevelId: string) => {
+    setLoading(true);
     try {
       await countryKycAssignmentApi.assign({
         countryCode,
@@ -229,6 +230,8 @@ export function KYCCountryAssignmentsPage() {
       setEditing(null);
     } catch (err) {
       console.error("Failed to assign KYC level", err);
+    } finally {
+      setLoading(false);
     }
   };
 

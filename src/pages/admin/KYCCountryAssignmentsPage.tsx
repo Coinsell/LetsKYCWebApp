@@ -185,6 +185,7 @@ export function KYCCountryAssignmentsPage() {
         countryKycAssignmentApi.listAll(),
         kycLevelsApi.list(),
       ]);
+      console.log("Loaded data:", countriesRes, assignmentsRes, kycLevelsRes);
       dispatch({ type: "SET_COUNTRIES", payload: countriesRes });
       dispatch({ type: "SET_ASSIGNMENTS", payload: assignmentsRes });
       dispatch({ type: "SET_KYC_LEVELS", payload: kycLevelsRes });
@@ -239,7 +240,10 @@ export function KYCCountryAssignmentsPage() {
 
     setDeletingId(assignment.id);
     try {
-      await countryKycAssignmentApi.delete(assignment.id, assignment.countryCode);
+      await countryKycAssignmentApi.delete(
+        assignment.id,
+        assignment.countryCode
+      );
       dispatch({ type: "DELETE_ASSIGNMENT", payload: assignment.id });
     } catch (err) {
       console.error("Failed to delete KYC assignment", err);
@@ -249,21 +253,39 @@ export function KYCCountryAssignmentsPage() {
   };
 
   // build enriched view
-  const countriesWithAssignments: CountryKycAssignmentView[] =
-    state.countries.map((c) => {
-      const assignment = state.assignments.find(
-        (a) => a.countryCode === c.code && a.isActive
+  // const countriesWithAssignments: CountryKycAssignmentView[] =
+  //   state.countries.map((c) => {
+  //     const assignment = state.assignments.find(
+  //       (a) => a.countryCode === c.code && a.isActive
+  //     );
+  //     const kycLevel = assignment
+  //       ? state.kycLevels.find((l) => l.id === assignment.kycLevelId)
+  //       : undefined;
+
+  //     return {
+  //       id: assignment?.id || "",
+  //       countryCode: c.code,
+  //       kycLevelId: assignment?.kycLevelId,
+  //       isActive: assignment?.isActive ?? true,
+  //       countryName: c.name,
+  //       kycLevelCode: kycLevel?.code,
+  //     };
+  //   });
+
+  // build enriched view directly from assignments
+  const countriesWithAssignments: CountryKycAssignmentView[] = state.assignments
+    // .filter((a) => a.isActive) // only show active ones
+    .map((assignment) => {
+      const country = state.countries.find(
+        (c) => c.code === assignment.countryCode
       );
-      const kycLevel = assignment
-        ? state.kycLevels.find((l) => l.id === assignment.kycLevelId)
-        : undefined;
+      const kycLevel = state.kycLevels.find(
+        (l) => l.id === assignment.kycLevelId
+      );
 
       return {
-        id: assignment?.id || "",
-        countryCode: c.code,
-        kycLevelId: assignment?.kycLevelId,
-        isActive: assignment?.isActive ?? true,
-        countryName: c.name,
+        ...assignment,
+        countryName: country?.name || assignment.countryCode,
         kycLevelCode: kycLevel?.code,
       };
     });
@@ -272,6 +294,31 @@ export function KYCCountryAssignmentsPage() {
     (c) =>
       !state.assignments.some((a) => a.countryCode === c.code && a.isActive)
   );
+
+  function InlineSpinner() {
+    return (
+      <svg
+        className="animate-spin h-4 w-4 text-neutral-500"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <circle
+          className="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          strokeWidth="4"
+        />
+        <path
+          className="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+        />
+      </svg>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -333,10 +380,17 @@ export function KYCCountryAssignmentsPage() {
                           : undefined
                       }
                     />
-                    {deletingId === assignment.id && (
+                    {/* {deletingId === assignment.id && (
                       <span className="text-sm text-neutral-500 ml-2 absolute top-4 right-4">
                         Deleting...
                       </span>
+                    )} */}
+
+                    {/* Overlay */}
+                    {deletingId === assignment.id && (
+                      <div className="absolute inset-0 bg-white/70 dark:bg-black/50 flex items-center justify-center rounded-lg">
+                        <InlineSpinner />
+                      </div>
                     )}
                   </div>
                 )

@@ -10,7 +10,7 @@ export const countryKycAssignmentApi = {
     countryCode: string
   ): Promise<CountryKycAssignment[]> => {
     return api.get<CountryKycAssignment[]>(
-      `/country_kyc_assignments/${countryCode}`
+      `country_kyc_assignments/${countryCode}`
     );
   },
 
@@ -18,7 +18,7 @@ export const countryKycAssignmentApi = {
     assignment: CountryKycAssignment
   ): Promise<CountryKycAssignment> => {
     return api.post<CountryKycAssignment>(
-      "/country_kyc_assignments",
+      "country_kyc_assignments",
       assignment
     );
   },
@@ -28,7 +28,7 @@ export const countryKycAssignmentApi = {
     countryCode: string
   ): Promise<{ message: string }> => {
     return api.delete<{ message: string }>(
-      `/country_kyc_assignments/${assignmentId}/${countryCode}`
+      `country_kyc_assignments/${assignmentId}/${countryCode}`
     );
   },
 };

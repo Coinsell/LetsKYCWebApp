@@ -16,7 +16,7 @@ import {
   KYCStatus,
   KycDetailType,
 } from "../../contexts/KYCAdminContext";
-import { Plus, Pencil, Trash2, Eye, Search, Paperclip } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, Search, Paperclip, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { userKycDetailsApi } from "../../lib/userkycdetailsapi";
 import { userApi } from "../../lib/userapi";
@@ -117,13 +117,23 @@ export function AdminUserKYCDetailsPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
-            User KYC Details
-          </h1>
-          <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
-            Monitor and manage individual user KYC progress and details
-          </p>
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
+              User KYC Details
+            </h1>
+            <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+              Monitor and manage individual user KYC progress and details
+            </p>
+          </div>
         </div>
         <Button onClick={handleCreate} className="flex items-center gap-2">
           <Plus className="h-4 w-4" />

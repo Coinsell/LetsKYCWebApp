@@ -5,7 +5,7 @@ import { Input } from '../components/ui/input'
 import { Badge } from '../components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import { useKYCAdmin, User, KYCStatus } from '../contexts/KYCAdminContext'
-import { Plus, Pencil, Trash2, Eye, UserCheck, Settings } from 'lucide-react'
+import { Plus, Pencil, Trash2, Eye, FileText } from 'lucide-react'
 import { userApi } from '../lib/userapi'
 import { userKycLevelsApi } from '../lib/userkyclevelsapi'
 import { getKycStatusDisplayText, getKycStatusColor } from '../utils/kycStatusConverter'
@@ -47,21 +47,16 @@ export function UsersPage() {
     }
   }
 
-  const handleViewKYCLevels = (userId: string) => {
-    // Navigate to user KYC levels page for this specific user
-    navigate(`/admin/user-kyc-levels?userId=${userId}`)
-  }
-
-  const handleViewKYCLevelDetails = async (userId: string) => {
-    // Navigate to user KYC level details page for this specific user
-    // First, we need to get the user's KYC levels to find the first one
+  const handleManageKYC = async (userId: string) => {
+    // Navigate directly to AdminUserKYCLevelDetailsPage for this specific user
+    // This will show the user's KYC progress and allow editing
     try {
       const userKycLevels = await userKycLevelsApi.listByUserId(userId);
       if (userKycLevels && userKycLevels.length > 0) {
-        // Navigate to the first KYC level's details
+        // Navigate to the first KYC level's details page for admin view
         navigate(`/admin/user-kyc-levels/${userKycLevels[0].id}`);
       } else {
-        // If no KYC levels found, show a message or navigate to create one
+        // If no KYC levels found, show a message
         alert('No KYC levels found for this user. Please assign a KYC level first.');
         navigate(`/admin/user-kyc-levels?userId=${userId}`);
       }
@@ -167,18 +162,10 @@ export function UsersPage() {
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={() => handleViewKYCLevels(user.id)}
-                    title="View KYC Levels"
+                    onClick={() => handleManageKYC(user.id)}
+                    title="Manage KYC Levels & Details"
                   >
-                    <UserCheck className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => handleViewKYCLevelDetails(user.id)}
-                    title="View KYC Level Details"
-                  >
-                    <Settings className="h-4 w-4" />
+                    <FileText className="h-4 w-4" />
                   </Button>
                   <Button variant="outline" size="sm">
                     <Pencil className="h-4 w-4" />

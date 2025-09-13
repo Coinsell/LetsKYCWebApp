@@ -19,7 +19,7 @@ import { userKycLevelsApi } from "../../lib/userkyclevelsapi";
 import { LoadingSpinner } from "../../components/ui/loading-spinner";
 import { getKycStatusDisplayText, getKycStatusColor } from "../../utils/kycStatusConverter";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Plus, Eye, Pencil, Trash2 } from "lucide-react";
+import { Plus, Eye, Pencil, Trash2, ArrowLeft } from "lucide-react";
 
 export function AdminUserKYCLevelsPage() {
   const { state, dispatch } = useKYCAdmin();
@@ -110,16 +110,26 @@ export function AdminUserKYCLevelsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
-            {userId ? `User KYC Levels (User: ${userId})` : "User KYC Levels"}
-          </h1>
-          <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
-            {userId 
-              ? `KYC level assignments for user ${userId}`
-              : "Manage user KYC level assignments and their configurations"
-            }
-          </p>
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
+              {userId ? `User KYC Levels (User: ${userId})` : "User KYC Levels"}
+            </h1>
+            <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+              {userId 
+                ? `KYC level assignments for user ${userId}`
+                : "Manage user KYC level assignments and their configurations"
+              }
+            </p>
+          </div>
         </div>
         <Button onClick={handleCreate} className="gap-2">
           <Plus className="h-4 w-4" />

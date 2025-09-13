@@ -8,10 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { useKYCAdmin, User, KYCStatus } from '../../contexts/KYCAdminContext'
 import { Plus, Eye, Pencil, Trash2, FileText } from 'lucide-react'
 import { userApi } from '../../lib/userapi'
+import { userKycLevelsApi } from '../../lib/userkyclevelsapi'
 import { getKycStatusDisplayText, getKycStatusColor } from '../../utils/kycStatusConverter'
+import { useNavigate } from 'react-router-dom'
 
 export function UsersPage() {
   const { state, dispatch } = useKYCAdmin()
+  const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
 
@@ -41,6 +44,26 @@ export function UsersPage() {
         console.error('Error deleting user:', error)
         dispatch({ type: 'SET_ERROR', payload: 'Failed to delete user' })
       }
+    }
+  }
+
+  const handleManageKYC = async (userId: string) => {
+    // Navigate directly to AdminUserKYCLevelDetailsPage for this specific user
+    // This will show the user's KYC progress and allow editing
+    try {
+      const userKycLevels = await userKycLevelsApi.listByUserId(userId);
+      if (userKycLevels && userKycLevels.length > 0) {
+        // Navigate to the first KYC level's details page for admin view
+        navigate(`/admin/user-kyc-levels/${userKycLevels[0].id}`);
+      } else {
+        // If no KYC levels found, show a message
+        alert('No KYC levels found for this user. Please assign a KYC level first.');
+        navigate(`/admin/user-kyc-levels?userId=${userId}`);
+      }
+    } catch (error) {
+      console.error('Error fetching user KYC levels:', error);
+      // Fallback to the list view
+      navigate(`/admin/user-kyc-levels?userId=${userId}`);
     }
   }
 
@@ -135,8 +158,16 @@ export function UsersPage() {
                       <Eye className="h-4 w-4" />
                     </Link>
                   </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleManageKYC(user.id)}
+                    title="Manage KYC Levels & Details"
+                  >
+                    <FileText className="h-4 w-4" />
+                  </Button>
                   {user.kycStatus === KYCStatus.Submitted && (
-                    <Button variant="outline" size="sm" asChild>
+                    <Button variant="outline" size="sm" asChild title="KYC Review">
                       <Link to={`/admin/users/${user.id}/kyc-review`}>
                         <FileText className="h-4 w-4" />
                       </Link>

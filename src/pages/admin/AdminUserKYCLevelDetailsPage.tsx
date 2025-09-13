@@ -15,9 +15,11 @@ import {
   KYCStatus,
   KycDetailType,
   TimeUnit,
+  User,
 } from "../../contexts/KYCAdminContext";
 import { userKycLevelsApi } from "../../lib/userkyclevelsapi";
 import { userKycDetailsApi } from "../../lib/userkycdetailsapi";
+import { userApi } from "../../lib/userapi";
 import { LoadingSpinner } from "../../components/ui/loading-spinner";
 import { getKycStatusDisplayText, getKycStatusColor } from "../../utils/kycStatusConverter";
 import { ArrowLeft, CheckCircle, Clock, XCircle, Paperclip, Pencil, Trash2 } from "lucide-react";
@@ -28,6 +30,7 @@ export function AdminUserKYCLevelDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [userKycLevel, setUserKycLevel] = useState<UserKYCLevel | null>(null);
   const [userKycDetails, setUserKycDetails] = useState<UserKYCDetail[]>([]);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     if (levelId) {
@@ -53,6 +56,14 @@ export function AdminUserKYCLevelDetailsPage() {
         
         if (foundLevel) {
           setUserKycLevel(foundLevel);
+          
+          // Fetch the user information
+          try {
+            const userData = await userApi.get(foundLevel.userId);
+            setUser(userData);
+          } catch (error) {
+            console.error("Error fetching user data:", error);
+          }
           
           // Now fetch the KYC details for this user
           const details = await userKycDetailsApi.getAll();
@@ -154,8 +165,8 @@ export function AdminUserKYCLevelDetailsPage() {
       <div className="space-y-6">
         <div className="text-center py-8">
           <p className="text-neutral-500">User KYC Level not found.</p>
-          <Button onClick={() => navigate("/admin/user-kyc-levels")} className="mt-4">
-            Back to User KYC Levels
+          <Button onClick={() => navigate(-1)} className="mt-4">
+            Back
           </Button>
         </div>
       </div>
@@ -169,11 +180,11 @@ export function AdminUserKYCLevelDetailsPage() {
         <div className="flex items-center gap-4">
           <Button
             variant="outline"
-            onClick={() => navigate("/admin/user-kyc-levels")}
+            onClick={() => navigate(-1)}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to User KYC Levels
+            Back
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
@@ -182,6 +193,11 @@ export function AdminUserKYCLevelDetailsPage() {
             <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
               {userKycLevel.description}
             </p>
+            {user && (
+              <p className="mt-1 text-sm text-neutral-500">
+                User: {user.firstName} {user.lastName} ({user.login})
+              </p>
+            )}
           </div>
         </div>
         <div className="flex gap-2">

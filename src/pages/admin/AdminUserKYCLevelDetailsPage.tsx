@@ -44,13 +44,12 @@ export function AdminUserKYCLevelDetailsPage() {
         return;
       }
 
-      // Fetch user KYC level data
-      // Note: We need to get the userId from the levelId or pass it as a parameter
-      // For now, we'll try to fetch by levelId and handle the API response
+      // Get all user KYC levels and find the one with matching ID
       try {
-        // First, let's get all user KYC levels to find the one with matching levelId
         const allLevels = await userKycLevelsApi.getAll();
-        const foundLevel = allLevels.find(level => level.id === levelId || level.userKycLevelId === levelId);
+        const foundLevel = allLevels.find(level => 
+          level.id === levelId || level.userKycLevelId === levelId
+        );
         
         if (foundLevel) {
           setUserKycLevel(foundLevel);
@@ -64,15 +63,18 @@ export function AdminUserKYCLevelDetailsPage() {
           setUserKycDetails(userDetails);
         } else {
           console.error("User KYC level not found");
+          setUserKycLevel(null);
+          setUserKycDetails([]);
         }
       } catch (apiError) {
         console.error("API error:", apiError);
-        // Fallback to empty state
         setUserKycLevel(null);
         setUserKycDetails([]);
       }
     } catch (error) {
       console.error("Error fetching data:", error);
+      setUserKycLevel(null);
+      setUserKycDetails([]);
     } finally {
       setLoading(false);
     }

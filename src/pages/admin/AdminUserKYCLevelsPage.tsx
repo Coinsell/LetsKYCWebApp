@@ -57,8 +57,21 @@ export function AdminUserKYCLevelsPage() {
   const fetchUserKycLevels = async () => {
     try {
       setLoading(true);
-      const levels = await userKycLevelsApi.getAll();
-      setUserKycLevels(levels);
+      console.log("Fetching user KYC levels...");
+      
+      if (userId) {
+        // If filtering by specific user, get their KYC levels
+        console.log(`Fetching KYC levels for user: ${userId}`);
+        const levels = await userKycLevelsApi.listByUserId(userId);
+        console.log("Fetched levels for user:", levels);
+        setUserKycLevels(levels);
+      } else {
+        // If no specific user, get all user KYC levels
+        console.log("Fetching all user KYC levels...");
+        const levels = await userKycLevelsApi.getAll();
+        console.log("Fetched all levels:", levels);
+        setUserKycLevels(levels);
+      }
     } catch (error) {
       console.error("Error fetching user KYC levels:", error);
       setUserKycLevels([]);
@@ -91,6 +104,7 @@ export function AdminUserKYCLevelsPage() {
   const handleViewDetails = (levelId: string) => {
     navigate(`/admin/user-kyc-levels/${levelId}`);
   };
+
 
 
   return (

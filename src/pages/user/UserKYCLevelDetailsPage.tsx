@@ -1,56 +1,67 @@
 import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../components/ui/card";
-import { Badge } from "../components/ui/badge";
+} from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { Badge } from "../../components/ui/badge";
 import {
-  useKYCAdmin,
+  UserKYCLevel,
   UserKYCDetail,
   KYCStatus,
   KycDetailType,
-} from "../contexts/KYCAdminContext";
-import { userKycDetailsApi } from "../lib/userkycdetailsapi";
-import { LoadingSpinner } from "../components/ui/loading-spinner";
-import { getKycStatusDisplayText, getKycStatusColor } from "../utils/kycStatusConverter";
-import { Paperclip, CheckCircle, Clock, XCircle } from "lucide-react";
-import { useAuth } from "../contexts/AuthContext";
+  TimeUnit,
+} from "../../contexts/KYCAdminContext";
+import { userKycLevelsApi } from "../../lib/userkyclevelsapi";
+import { userKycDetailsApi } from "../../lib/userkycdetailsapi";
+import { LoadingSpinner } from "../../components/ui/loading-spinner";
+import { getKycStatusDisplayText, getKycStatusColor } from "../../utils/kycStatusConverter";
+import { ArrowLeft, CheckCircle, Clock, XCircle, Paperclip, Eye } from "lucide-react";
 
-export function UserKYCDetailsPage() {
-  const { user } = useAuth();
+export function UserKYCLevelDetailsPage() {
+  const { levelId } = useParams<{ levelId: string }>();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [userKycLevel, setUserKycLevel] = useState<UserKYCLevel | null>(null);
   const [userKycDetails, setUserKycDetails] = useState<UserKYCDetail[]>([]);
 
   useEffect(() => {
-    fetchUserKycDetails();
-  }, []);
+    if (levelId) {
+      fetchData();
+    }
+  }, [levelId]);
 
-  const fetchUserKycDetails = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const currentUserId = user?.id || "current-user-id";
       
-      // Try to fetch real data first
-      try {
-        const details = await userKycDetailsApi.getAll();
-        // Filter for current user's details
-        const userDetails = details.filter(detail => detail.userId === currentUserId);
-        setUserKycDetails(userDetails);
-        return;
-      } catch (apiError) {
-        console.log("API not available, using mock data:", apiError);
-      }
-      
-      // Fallback to comprehensive mock data
+      // For demo purposes, create mock data
+      // In a real app, you'd fetch the actual data using the APIs
+      const mockUserKycLevel: UserKYCLevel = {
+        id: levelId || "user-kyc-level-1",
+        userId: "current-user-id",
+        userKycLevelId: levelId || "kyc-level-1",
+        code: "BASIC",
+        description: "Basic KYC Level - Limited transactions and basic verification",
+        status: KYCStatus.Approved,
+        maxDepositAmount: 10000,
+        maxWithdrawalAmount: 5000,
+        duration: 30,
+        timeUnit: TimeUnit.Day,
+        docType: "UserKycLevel",
+        lastUpdated: new Date().toISOString(),
+      };
+
       const mockUserKycDetails: UserKYCDetail[] = [
         {
           id: "user-kyc-detail-1",
-          userId: currentUserId,
+          userId: "current-user-id",
           userKycDetailId: "kyc-detail-1",
-          userKycLevelId: "kyc-level-1",
+          userKycLevelId: levelId || "kyc-level-1",
           sequence: 1,
           step: "Personal Information",
           description: "Provide your personal information including name, date of birth, and contact details",
@@ -63,9 +74,9 @@ export function UserKYCDetailsPage() {
         },
         {
           id: "user-kyc-detail-2",
-          userId: currentUserId,
+          userId: "current-user-id",
           userKycDetailId: "kyc-detail-2",
-          userKycLevelId: "kyc-level-1",
+          userKycLevelId: levelId || "kyc-level-1",
           sequence: 2,
           step: "Phone Verification",
           description: "Verify your phone number with OTP",
@@ -78,9 +89,9 @@ export function UserKYCDetailsPage() {
         },
         {
           id: "user-kyc-detail-3",
-          userId: currentUserId,
+          userId: "current-user-id",
           userKycDetailId: "kyc-detail-3",
-          userKycLevelId: "kyc-level-1",
+          userKycLevelId: levelId || "kyc-level-1",
           sequence: 3,
           step: "Identity Document",
           description: "Upload a valid government-issued ID document",
@@ -100,9 +111,9 @@ export function UserKYCDetailsPage() {
         },
         {
           id: "user-kyc-detail-4",
-          userId: currentUserId,
+          userId: "current-user-id",
           userKycDetailId: "kyc-detail-4",
-          userKycLevelId: "kyc-level-1",
+          userKycLevelId: levelId || "kyc-level-1",
           sequence: 4,
           step: "Address Proof",
           description: "Upload a recent utility bill or bank statement",
@@ -113,122 +124,12 @@ export function UserKYCDetailsPage() {
           docType: "UserKycDetail",
           lastUpdated: new Date().toISOString(),
         },
-        {
-          id: "user-kyc-detail-5",
-          userId: currentUserId,
-          userKycDetailId: "kyc-detail-5",
-          userKycLevelId: "kyc-level-2",
-          sequence: 5,
-          step: "Selfie Verification",
-          description: "Take a selfie for facial recognition verification",
-          type: KycDetailType.selfie,
-          status: KYCStatus.Submitted,
-          hasAttachments: true,
-          attachments: [
-            {
-              id: "attachment-2",
-              filename: "selfie.jpg",
-              type: "image/jpeg",
-              url: "https://example.com/selfie.jpg"
-            }
-          ],
-          docType: "UserKycDetail",
-          lastUpdated: new Date().toISOString(),
-        },
-        {
-          id: "user-kyc-detail-6",
-          userId: currentUserId,
-          userKycDetailId: "kyc-detail-6",
-          userKycLevelId: "kyc-level-2",
-          sequence: 6,
-          step: "Occupation Details",
-          description: "Provide your occupation and employment information",
-          type: KycDetailType.occupation,
-          status: KYCStatus.Approved,
-          hasAttachments: false,
-          attachments: [],
-          docType: "UserKycDetail",
-          lastUpdated: new Date().toISOString(),
-        },
-        {
-          id: "user-kyc-detail-7",
-          userId: currentUserId,
-          userKycDetailId: "kyc-detail-7",
-          userKycLevelId: "kyc-level-3",
-          sequence: 7,
-          step: "PEP Declaration",
-          description: "Declare if you are a Politically Exposed Person (PEP)",
-          type: KycDetailType.pepDeclaration,
-          status: KYCStatus.InProgress,
-          hasAttachments: false,
-          attachments: [],
-          docType: "UserKycDetail",
-          lastUpdated: new Date().toISOString(),
-        },
-        {
-          id: "user-kyc-detail-8",
-          userId: currentUserId,
-          userKycDetailId: "kyc-detail-8",
-          userKycLevelId: "kyc-level-3",
-          sequence: 8,
-          step: "Aadhaar Verification",
-          description: "Verify your Aadhaar number and upload Aadhaar card",
-          type: KycDetailType.aadhaar,
-          status: KYCStatus.UnderReview,
-          hasAttachments: true,
-          attachments: [
-            {
-              id: "attachment-3",
-              filename: "aadhaar.pdf",
-              type: "application/pdf",
-              url: "https://example.com/aadhaar.pdf"
-            }
-          ],
-          docType: "UserKycDetail",
-          lastUpdated: new Date().toISOString(),
-        },
-        {
-          id: "user-kyc-detail-9",
-          userId: currentUserId,
-          userKycDetailId: "kyc-detail-9",
-          userKycLevelId: "kyc-level-3",
-          sequence: 9,
-          step: "PAN Verification",
-          description: "Verify your PAN number and upload PAN card",
-          type: KycDetailType.pan,
-          status: KYCStatus.Rejected,
-          hasAttachments: true,
-          attachments: [
-            {
-              id: "attachment-4",
-              filename: "pan.pdf",
-              type: "application/pdf",
-              url: "https://example.com/pan.pdf"
-            }
-          ],
-          docType: "UserKycDetail",
-          lastUpdated: new Date().toISOString(),
-        },
-        {
-          id: "user-kyc-detail-10",
-          userId: currentUserId,
-          userKycDetailId: "kyc-detail-10",
-          userKycLevelId: "kyc-level-4",
-          sequence: 10,
-          step: "Liveliness Check",
-          description: "Complete a liveliness check for enhanced security",
-          type: KycDetailType.liveliness,
-          status: KYCStatus.NotSubmitted,
-          hasAttachments: false,
-          attachments: [],
-          docType: "UserKycDetail",
-          lastUpdated: new Date().toISOString(),
-        },
       ];
+
+      setUserKycLevel(mockUserKycLevel);
       setUserKycDetails(mockUserKycDetails);
     } catch (error) {
-      console.error("Error fetching user KYC details:", error);
-      setUserKycDetails([]);
+      console.error("Error fetching data:", error);
     } finally {
       setLoading(false);
     }
@@ -271,28 +172,107 @@ export function UserKYCDetailsPage() {
     return <LoadingSpinner fullscreen={false} />;
   }
 
+  if (!userKycLevel) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-8">
+          <p className="text-neutral-500">KYC Level not found.</p>
+          <Button onClick={() => navigate("/user/kyc-levels")} className="mt-4">
+            Back to KYC Levels
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
-          My KYC Progress
-        </h1>
-        <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
-          Track your KYC verification progress and requirements
-        </p>
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Button
+          variant="outline"
+          onClick={() => navigate("/user/kyc-levels")}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to KYC Levels
+        </Button>
+        <div>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
+            {userKycLevel.code} - KYC Level Details
+          </h1>
+          <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+            {userKycLevel.description}
+          </p>
+        </div>
       </div>
 
+      {/* KYC Level Overview */}
       <Card>
         <CardHeader>
-          <CardTitle>Your KYC Verification Steps</CardTitle>
+          <CardTitle>KYC Level Overview</CardTitle>
           <CardDescription>
-            Complete these steps to verify your identity and complete KYC
+            Details and requirements for this KYC level
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div>
+              <h3 className="font-semibold text-lg mb-2">Level Code</h3>
+              <Badge variant="outline" className="text-lg px-3 py-1">
+                {userKycLevel.code}
+              </Badge>
+            </div>
+            <div>
+              <h3 className="font-semibold text-lg mb-2">Status</h3>
+              <span
+                className={`px-3 py-1 rounded-full text-sm font-medium ${getKycStatusColor(userKycLevel.status)}`}
+              >
+                {getKycStatusDisplayText(userKycLevel.status)}
+              </span>
+            </div>
+            <div>
+              <h3 className="font-semibold text-lg mb-2">Max Deposit</h3>
+              <p className="text-2xl font-bold text-green-600">
+                ${userKycLevel.maxDepositAmount?.toLocaleString()}
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold text-lg mb-2">Max Withdrawal</h3>
+              <p className="text-2xl font-bold text-blue-600">
+                ${userKycLevel.maxWithdrawalAmount?.toLocaleString()}
+              </p>
+            </div>
+          </div>
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="font-semibold text-lg mb-2">Duration</h3>
+              <p className="text-lg">
+                {userKycLevel.duration} {userKycLevel.timeUnit}
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold text-lg mb-2">Last Updated</h3>
+              <p className="text-lg">
+                {new Date(userKycLevel.lastUpdated).toLocaleDateString()}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Verification Steps */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Verification Steps</CardTitle>
+          <CardDescription>
+            Complete these steps to maintain your KYC level
           </CardDescription>
         </CardHeader>
         <CardContent>
           {userKycDetails.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-neutral-500">No KYC details found for your account.</p>
+              <p className="text-neutral-500">No verification steps found for this level.</p>
             </div>
           ) : (
             <div className="space-y-4">

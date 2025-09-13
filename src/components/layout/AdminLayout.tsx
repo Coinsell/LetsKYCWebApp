@@ -12,6 +12,9 @@ import { FIUIndiaJourneyPage } from "../../pages/user/FIUIndiaJourneyPage";
 import { KYCDetailsPage } from "@/pages/KYCDetailsPage";
 import KYCLevelDetailsPage from "@/pages/KYCLevelDetailsPage";
 import { KYCCountryAssignmentsPage } from "@/pages/admin/KYCCountryAssignmentsPage";
+import { AdminUserKYCLevelsPage } from "@/pages/admin/AdminUserKYCLevelsPage";
+import { AdminUserKYCDetailsPage } from "@/pages/admin/AdminUserKYCDetailsPage";
+import { AdminUserKYCLevelDetailsPage } from "@/pages/admin/AdminUserKYCLevelDetailsPage";
 
 export function AdminLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // desktop only
@@ -79,6 +82,18 @@ export function AdminLayout() {
               <Route
                 path="/admin/country-kyc-levels"
                 element={<KYCCountryAssignmentsPage />}
+              />
+              <Route
+                path="/admin/user-kyc-levels"
+                element={<AdminUserKYCLevelsPage />}
+              />
+              <Route
+                path="/admin/user-kyc-levels/:levelId"
+                element={<AdminUserKYCLevelDetailsPage />}
+              />
+              <Route
+                path="/admin/user-kyc-details"
+                element={<AdminUserKYCDetailsPage />}
               />
             </Routes>
           </div>

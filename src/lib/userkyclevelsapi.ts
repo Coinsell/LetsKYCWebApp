@@ -33,6 +33,16 @@ export const userKycLevelsApi = {
     }
   },
 
+  // Get all User KYC Levels (admin function)
+  getAll: async (): Promise<UserKYCLevel[]> => {
+    try {
+      return await api.get<UserKYCLevel[]>("user_kyc_levels");
+    } catch (error: any) {
+      console.error("Error fetching all user KYC levels:", error);
+      throw error;
+    }
+  },
+
   // Update User KYC Level by ID
   update: async (id: string, userKycLevel: UserKYCLevel): Promise<UserKYCLevel> => {
     try {

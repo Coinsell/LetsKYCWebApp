@@ -3,6 +3,9 @@ import { UserHeader } from './UserHeader'
 import { UserProfilePage } from '../../pages/user/UserProfilePage'
 import { DynamicKYCJourneyPage } from '../../pages/user/DynamicKYCJourneyPage'
 import { FIUIndiaJourneyPage } from '../../pages/user/FIUIndiaJourneyPage'
+import { UserKYCLevelsPage } from '../../pages/UserKYCLevelsPage'
+import { UserKYCDetailsPage } from '../../pages/UserKYCDetailsPage'
+import { UserKYCLevelDetailsPage } from '../../pages/user/UserKYCLevelDetailsPage'
 
 export function UserLayout() {
   return (
@@ -15,6 +18,9 @@ export function UserLayout() {
             <Route path="/" element={<Navigate to="/user/profile" replace />} />
             <Route path="/user/profile" element={<UserProfilePage />} />
             <Route path="/user/kyc-journey" element={<DynamicKYCJourneyPage />} />
+            <Route path="/user/kyc-levels" element={<UserKYCLevelsPage />} />
+            <Route path="/user/kyc-levels/:levelId" element={<UserKYCLevelDetailsPage />} />
+            <Route path="/user/kyc-details" element={<UserKYCDetailsPage />} />
             <Route path="/user/fiu-india-journey" element={<FIUIndiaJourneyPage />} />
             <Route path="*" element={<Navigate to="/user/profile" replace />} />
           </Routes>

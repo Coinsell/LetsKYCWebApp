@@ -30,16 +30,34 @@ interface AdminSidebarProps {
 
 const navigation = [
   { name: "Dashboard", href: "/admin/dashboard", icon: Home },
-  { name: "KYC Levels", href: "/admin/kyc-levels", icon: ShieldCheck },
-  { name: "KYC Details", href: "/admin/kyc-details", icon: IdCard },
   {
-    name: "KYC Rules",
-    href: "/admin/country-kyc-levels",
-    icon: Globe,
+    group: "KYC Management",
+    items: [
+      { name: "KYC Levels", href: "/admin/kyc-levels", icon: ShieldCheck },
+      { name: "KYC Details", href: "/admin/kyc-details", icon: IdCard },
+      { name: "KYC Rules", href: "/admin/country-kyc-levels", icon: Globe },
+    ]
   },
-  { name: "Users", href: "/admin/users", icon: Users },
-  { name: "FIU India Sample", href: "/admin/fiu-india-sample", icon: FileText },
-  { name: "Profile", href: "/admin/profile", icon: UserCheck },
+  {
+    group: "User Management",
+    items: [
+      { name: "Users", href: "/admin/users", icon: Users },
+      { name: "User KYC Levels", href: "/admin/user-kyc-levels", icon: UserCheck },
+      { name: "User KYC Details", href: "/admin/user-kyc-details", icon: IdCard },
+    ]
+  },
+  {
+    group: "Tools & Samples",
+    items: [
+      { name: "FIU India Sample", href: "/admin/fiu-india-sample", icon: FileText },
+    ]
+  },
+  {
+    group: "Account",
+    items: [
+      { name: "Profile", href: "/admin/profile", icon: Settings },
+    ]
+  },
 ];
 
 export function AdminSidebar({
@@ -54,7 +72,7 @@ export function AdminSidebar({
     item,
     collapsed,
   }: {
-    item: (typeof navigation)[0];
+    item: { name: string; href: string; icon: any };
     collapsed: boolean;
   }) => {
     const isActive = location.pathname === item.href;
@@ -91,6 +109,31 @@ export function AdminSidebar({
     return content;
   };
 
+  const SidebarGroup = ({ group, collapsed }: { group: any; collapsed: boolean }) => {
+    if (collapsed) {
+      return (
+        <div className="space-y-1">
+          {group.items.map((item: any) => (
+            <SidebarItem key={item.name} item={item} collapsed={collapsed} />
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-1">
+        <h3 className="px-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
+          {group.group}
+        </h3>
+        <div className="space-y-1">
+          {group.items.map((item: any) => (
+            <SidebarItem key={item.name} item={item} collapsed={collapsed} />
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       {/* Desktop Sidebar */}
@@ -121,10 +164,21 @@ export function AdminSidebar({
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 space-y-1 p-4">
-          {navigation.map((item) => (
-            <SidebarItem key={item.name} item={item} collapsed={collapsed} />
-          ))}
+        <nav className="flex-1 space-y-6 p-4">
+          {navigation.map((item, index) => {
+            if ('name' in item && 'href' in item) {
+              // Single item
+              return (
+                <SidebarItem key={item.name} item={item as { name: string; href: string; icon: any }} collapsed={collapsed} />
+              );
+            } else if ('group' in item) {
+              // Group item
+              return (
+                <SidebarGroup key={item.group} group={item} collapsed={collapsed} />
+              );
+            }
+            return null;
+          })}
         </nav>
 
         {/* Footer */}
@@ -154,28 +208,31 @@ export function AdminSidebar({
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 space-y-1 p-4">
-              {navigation.map((item) => (
-                <SidebarItem key={item.name} item={item} collapsed={false} />
-              ))}
+            <nav className="flex-1 space-y-6 p-4">
+              {navigation.map((item, index) => {
+                if ('name' in item && 'href' in item) {
+                  // Single item
+                  return (
+                    <SidebarItem key={item.name} item={item as { name: string; href: string; icon: any }} collapsed={false} />
+                  );
+                } else if ('group' in item) {
+                  // Group item
+                  return (
+                    <SidebarGroup key={item.group} group={item} collapsed={false} />
+                  );
+                }
+                return null;
+              })}
             </nav>
 
             {/* Footer */}
             <div className="border-t border-neutral-200 dark:border-neutral-800 p-4">
-              <div
-                className={cn(
-                  "flex items-center gap-3 text-sm text-neutral-600 dark:text-neutral-400",
-                  collapsed && "justify-center"
-                )}
-              >
+              <div className="flex items-center gap-3 text-sm text-neutral-600 dark:text-neutral-400">
                 <Settings className="h-4 w-4" />
-                {!collapsed && <span>Admin Panel</span>}
+                <span>Admin Panel</span>
               </div>
             </div>
           </div>
-
-          {/* Backdrop */}
-          <div className="flex-1 bg-black/50" onClick={onClose} />
         </div>
       )}
     </>

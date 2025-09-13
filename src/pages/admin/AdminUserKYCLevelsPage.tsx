@@ -5,26 +5,27 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../components/ui/card";
-import { Badge } from "../components/ui/badge";
+} from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Badge } from "../../components/ui/badge";
 import {
   useKYCAdmin,
   UserKYCLevel,
   KYCStatus,
   TimeUnit,
-} from "../contexts/KYCAdminContext";
-import { userKycLevelsApi } from "../lib/userkyclevelsapi";
-import { LoadingSpinner } from "../components/ui/loading-spinner";
-import { getKycStatusDisplayText, getKycStatusColor } from "../utils/kycStatusConverter";
-import { useAuth } from "../contexts/AuthContext";
+} from "../../contexts/KYCAdminContext";
+import { userKycLevelsApi } from "../../lib/userkyclevelsapi";
+import { LoadingSpinner } from "../../components/ui/loading-spinner";
+import { getKycStatusDisplayText, getKycStatusColor } from "../../utils/kycStatusConverter";
 import { useNavigate } from "react-router-dom";
-import { Button } from "../components/ui/button";
-import { Eye } from "lucide-react";
+import { Plus, Eye, Pencil, Trash2 } from "lucide-react";
 
-export function UserKYCLevelsPage() {
-  const { user } = useAuth();
+export function AdminUserKYCLevelsPage() {
+  const { state, dispatch } = useKYCAdmin();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
   const [userKycLevels, setUserKycLevels] = useState<UserKYCLevel[]>([]);
 
   useEffect(() => {
@@ -34,11 +35,10 @@ export function UserKYCLevelsPage() {
   const fetchUserKycLevels = async () => {
     try {
       setLoading(true);
-      const currentUserId = user?.id || "current-user-id";
       
       // Try to fetch real data first
       try {
-        const levels = await userKycLevelsApi.listByUserId(currentUserId);
+        const levels = await userKycLevelsApi.getAll();
         setUserKycLevels(levels);
         return;
       } catch (apiError) {
@@ -49,7 +49,7 @@ export function UserKYCLevelsPage() {
       const mockUserKycLevels: UserKYCLevel[] = [
         {
           id: "user-kyc-level-1",
-          userId: currentUserId,
+          userId: "user-1",
           userKycLevelId: "kyc-level-1",
           code: "BASIC",
           description: "Basic KYC Level - Limited transactions and basic verification",
@@ -63,7 +63,7 @@ export function UserKYCLevelsPage() {
         },
         {
           id: "user-kyc-level-2",
-          userId: currentUserId,
+          userId: "user-2",
           userKycLevelId: "kyc-level-2",
           code: "ENHANCED",
           description: "Enhanced KYC Level - Higher limits with additional verification",
@@ -77,7 +77,7 @@ export function UserKYCLevelsPage() {
         },
         {
           id: "user-kyc-level-3",
-          userId: currentUserId,
+          userId: "user-3",
           userKycLevelId: "kyc-level-3",
           code: "PREMIUM",
           description: "Premium KYC Level - Maximum limits with full verification",
@@ -91,7 +91,7 @@ export function UserKYCLevelsPage() {
         },
         {
           id: "user-kyc-level-4",
-          userId: currentUserId,
+          userId: "user-4",
           userKycLevelId: "kyc-level-4",
           code: "VIP",
           description: "VIP KYC Level - Unlimited transactions with premium support",
@@ -105,7 +105,7 @@ export function UserKYCLevelsPage() {
         },
         {
           id: "user-kyc-level-5",
-          userId: currentUserId,
+          userId: "user-5",
           userKycLevelId: "kyc-level-5",
           code: "ENTERPRISE",
           description: "Enterprise KYC Level - Corporate accounts with custom limits",
@@ -127,40 +127,79 @@ export function UserKYCLevelsPage() {
     }
   };
 
-  const handleViewDetails = (levelId: string) => {
-    navigate(`/user/kyc-levels/${levelId}`);
+  const handleCreate = () => {
+    // TODO: Implement create functionality
+    console.log("Create new user KYC level");
   };
 
-  if (loading) {
-    return <LoadingSpinner fullscreen={false} />;
-  }
+  const handleEdit = (level: UserKYCLevel) => {
+    // TODO: Implement edit functionality
+    console.log("Edit user KYC level:", level);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (confirm("Are you sure you want to delete this user KYC level?")) {
+      try {
+        await userKycLevelsApi.delete(id, "user-id"); // You'd need the actual user ID
+        setUserKycLevels(prev => prev.filter(level => level.id !== id));
+      } catch (error) {
+        console.error("Error deleting user KYC level:", error);
+      }
+    }
+  };
+
+  const handleViewDetails = (levelId: string) => {
+    navigate(`/admin/user-kyc-levels/${levelId}`);
+  };
+
+  const filteredLevels = userKycLevels.filter(
+    (level) =>
+      level.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      level.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      level.userId.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
-          My KYC Levels
-        </h1>
-        <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
-          View your assigned KYC levels and their details
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
+            User KYC Levels
+          </h1>
+          <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+            Manage user KYC level assignments and their configurations
+          </p>
+        </div>
+        <Button onClick={handleCreate} className="gap-2">
+          <Plus className="h-4 w-4" />
+          Assign KYC Level
+        </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Your KYC Level Assignments</CardTitle>
-          <CardDescription>
-            These are the KYC levels assigned to your account
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>User KYC Levels</CardTitle>
+              <CardDescription>
+                View and manage KYC level assignments for all users
+              </CardDescription>
+            </div>
+            <div className="w-72">
+              <Input
+                placeholder="Search user KYC levels..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          {userKycLevels.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-neutral-500">No KYC levels assigned to your account.</p>
-            </div>
+          {loading ? (
+            <LoadingSpinner fullscreen={false} />
           ) : (
             <div className="space-y-4">
-              {userKycLevels.map((level) => (
+              {filteredLevels.map((level) => (
                 <div
                   key={level.id}
                   className="flex items-center justify-between p-4 border border-neutral-200 dark:border-neutral-700 rounded-lg"
@@ -169,7 +208,7 @@ export function UserKYCLevelsPage() {
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="font-semibold text-lg">{level.code}</h3>
                       <Badge variant="outline" className="text-xs">
-                        {level.description}
+                        User: {level.userId}
                       </Badge>
                       <span
                         className={`px-3 py-1 rounded-full text-sm font-medium ${getKycStatusColor(level.status)}`}
@@ -177,6 +216,9 @@ export function UserKYCLevelsPage() {
                         {getKycStatusDisplayText(level.status)}
                       </span>
                     </div>
+                    <p className="text-neutral-600 dark:text-neutral-400 mb-2">
+                      {level.description}
+                    </p>
                     <div className="flex gap-4 text-sm text-neutral-500">
                       <span>
                         Max Deposit: ${level.maxDepositAmount?.toLocaleString()}
@@ -201,9 +243,28 @@ export function UserKYCLevelsPage() {
                       <Eye className="h-4 w-4 mr-2" />
                       View Details
                     </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEdit(level)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDelete(level.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               ))}
+              {filteredLevels.length === 0 && (
+                <div className="text-center py-8">
+                  <p className="text-neutral-500">No user KYC levels found</p>
+                </div>
+              )}
             </div>
           )}
         </CardContent>

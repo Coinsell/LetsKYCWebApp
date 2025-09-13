@@ -1,4 +1,4 @@
-import { Sun, Moon, User, FileText, Home } from "lucide-react";
+import { Sun, Moon, User, FileText, Home, ShieldCheck, IdCard } from "lucide-react";
 import { Button } from "../ui/button";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAuth } from "../../contexts/AuthContext";
@@ -16,6 +16,8 @@ import { cn } from "@/lib/utils";
 const navigation = [
   { name: "Profile", href: "/user/profile", icon: Home },
   { name: "KYC Journey", href: "/user/kyc-journey", icon: FileText },
+  { name: "My KYC Levels", href: "/user/kyc-levels", icon: ShieldCheck },
+  { name: "My KYC Details", href: "/user/kyc-details", icon: IdCard },
 ];
 
 export function UserHeader() {

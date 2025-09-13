@@ -8,6 +8,7 @@ import { useKYCAdmin, User, KYCStatus } from '../contexts/KYCAdminContext'
 import { Plus, Pencil, Trash2, Eye } from 'lucide-react'
 import { userApi } from '../lib/userapi'
 import { getKycStatusDisplayText, getKycStatusColor } from '../utils/kycStatusConverter'
+import { LoadingSpinner } from '../components/ui/loading-spinner'
 
 export function UsersPage() {
   const { state, dispatch } = useKYCAdmin()
@@ -102,8 +103,11 @@ export function UsersPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {filteredUsers.map((user) => (
+          {state.loading ? (
+            <LoadingSpinner fullscreen={false} />
+          ) : (
+            <div className="space-y-4">
+              {filteredUsers.map((user) => (
               <div key={user.id} className="flex items-center justify-between p-4 border border-neutral-200 rounded-lg">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
@@ -141,12 +145,13 @@ export function UsersPage() {
                 </div>
               </div>
             ))}
-            {filteredUsers.length === 0 && (
-              <div className="text-center py-8">
-                <p className="text-neutral-500">No users found</p>
-              </div>
-            )}
-          </div>
+              {filteredUsers.length === 0 && (
+                <div className="text-center py-8">
+                  <p className="text-neutral-500">No users found</p>
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -18,107 +18,47 @@ import {
 import { userKycLevelsApi } from "../../lib/userkyclevelsapi";
 import { LoadingSpinner } from "../../components/ui/loading-spinner";
 import { getKycStatusDisplayText, getKycStatusColor } from "../../utils/kycStatusConverter";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Plus, Eye, Pencil, Trash2 } from "lucide-react";
 
 export function AdminUserKYCLevelsPage() {
   const { state, dispatch } = useKYCAdmin();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [userKycLevels, setUserKycLevels] = useState<UserKYCLevel[]>([]);
+  const [filteredLevels, setFilteredLevels] = useState<UserKYCLevel[]>([]);
+  const userId = searchParams.get('userId');
 
   useEffect(() => {
     fetchUserKycLevels();
   }, []);
 
+  useEffect(() => {
+    // Filter levels based on userId and search term
+    let filtered = userKycLevels;
+    
+    if (userId) {
+      filtered = filtered.filter(level => level.userId === userId);
+    }
+    
+    if (searchTerm) {
+      filtered = filtered.filter(level =>
+        level.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        level.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        level.userId.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    
+    setFilteredLevels(filtered);
+  }, [userKycLevels, userId, searchTerm]);
+
   const fetchUserKycLevels = async () => {
     try {
       setLoading(true);
-      
-      // Try to fetch real data first
-      try {
-        const levels = await userKycLevelsApi.getAll();
-        setUserKycLevels(levels);
-        return;
-      } catch (apiError) {
-        console.log("API not available, using mock data:", apiError);
-      }
-      
-      // Fallback to comprehensive mock data
-      const mockUserKycLevels: UserKYCLevel[] = [
-        {
-          id: "user-kyc-level-1",
-          userId: "user-1",
-          userKycLevelId: "kyc-level-1",
-          code: "BASIC",
-          description: "Basic KYC Level - Limited transactions and basic verification",
-          status: KYCStatus.Approved,
-          maxDepositAmount: 10000,
-          maxWithdrawalAmount: 5000,
-          duration: 30,
-          timeUnit: TimeUnit.Day,
-          docType: "UserKycLevel",
-          lastUpdated: new Date().toISOString(),
-        },
-        {
-          id: "user-kyc-level-2",
-          userId: "user-2",
-          userKycLevelId: "kyc-level-2",
-          code: "ENHANCED",
-          description: "Enhanced KYC Level - Higher limits with additional verification",
-          status: KYCStatus.InProgress,
-          maxDepositAmount: 50000,
-          maxWithdrawalAmount: 25000,
-          duration: 90,
-          timeUnit: TimeUnit.Day,
-          docType: "UserKycLevel",
-          lastUpdated: new Date().toISOString(),
-        },
-        {
-          id: "user-kyc-level-3",
-          userId: "user-3",
-          userKycLevelId: "kyc-level-3",
-          code: "PREMIUM",
-          description: "Premium KYC Level - Maximum limits with full verification",
-          status: KYCStatus.UnderReview,
-          maxDepositAmount: 100000,
-          maxWithdrawalAmount: 50000,
-          duration: 180,
-          timeUnit: TimeUnit.Day,
-          docType: "UserKycLevel",
-          lastUpdated: new Date().toISOString(),
-        },
-        {
-          id: "user-kyc-level-4",
-          userId: "user-4",
-          userKycLevelId: "kyc-level-4",
-          code: "VIP",
-          description: "VIP KYC Level - Unlimited transactions with premium support",
-          status: KYCStatus.Submitted,
-          maxDepositAmount: 500000,
-          maxWithdrawalAmount: 250000,
-          duration: 365,
-          timeUnit: TimeUnit.Day,
-          docType: "UserKycLevel",
-          lastUpdated: new Date().toISOString(),
-        },
-        {
-          id: "user-kyc-level-5",
-          userId: "user-5",
-          userKycLevelId: "kyc-level-5",
-          code: "ENTERPRISE",
-          description: "Enterprise KYC Level - Corporate accounts with custom limits",
-          status: KYCStatus.NotSubmitted,
-          maxDepositAmount: 1000000,
-          maxWithdrawalAmount: 500000,
-          duration: 730,
-          timeUnit: TimeUnit.Day,
-          docType: "UserKycLevel",
-          lastUpdated: new Date().toISOString(),
-        },
-      ];
-      setUserKycLevels(mockUserKycLevels);
+      const levels = await userKycLevelsApi.getAll();
+      setUserKycLevels(levels);
     } catch (error) {
       console.error("Error fetching user KYC levels:", error);
       setUserKycLevels([]);
@@ -152,22 +92,19 @@ export function AdminUserKYCLevelsPage() {
     navigate(`/admin/user-kyc-levels/${levelId}`);
   };
 
-  const filteredLevels = userKycLevels.filter(
-    (level) =>
-      level.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      level.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      level.userId.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
-            User KYC Levels
+            {userId ? `User KYC Levels (User: ${userId})` : "User KYC Levels"}
           </h1>
           <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
-            Manage user KYC level assignments and their configurations
+            {userId 
+              ? `KYC level assignments for user ${userId}`
+              : "Manage user KYC level assignments and their configurations"
+            }
           </p>
         </div>
         <Button onClick={handleCreate} className="gap-2">

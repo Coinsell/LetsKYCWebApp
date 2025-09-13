@@ -39,95 +39,38 @@ export function AdminUserKYCLevelDetailsPage() {
     try {
       setLoading(true);
       
-      // For demo purposes, create mock data
-      // In a real app, you'd fetch the actual data using the APIs
-      const mockUserKycLevel: UserKYCLevel = {
-        id: levelId || "user-kyc-level-1",
-        userId: "user-1",
-        userKycLevelId: levelId || "kyc-level-1",
-        code: "BASIC",
-        description: "Basic KYC Level - Limited transactions and basic verification",
-        status: KYCStatus.Approved,
-        maxDepositAmount: 10000,
-        maxWithdrawalAmount: 5000,
-        duration: 30,
-        timeUnit: TimeUnit.Day,
-        docType: "UserKycLevel",
-        lastUpdated: new Date().toISOString(),
-      };
+      if (!levelId) {
+        console.error("No level ID provided");
+        return;
+      }
 
-      const mockUserKycDetails: UserKYCDetail[] = [
-        {
-          id: "user-kyc-detail-1",
-          userId: "user-1",
-          userKycDetailId: "kyc-detail-1",
-          userKycLevelId: levelId || "kyc-level-1",
-          sequence: 1,
-          step: "Personal Information",
-          description: "Provide your personal information including name, date of birth, and contact details",
-          type: KycDetailType.userInfo,
-          status: KYCStatus.Approved,
-          hasAttachments: false,
-          attachments: [],
-          docType: "UserKycDetail",
-          lastUpdated: new Date().toISOString(),
-        },
-        {
-          id: "user-kyc-detail-2",
-          userId: "user-1",
-          userKycDetailId: "kyc-detail-2",
-          userKycLevelId: levelId || "kyc-level-1",
-          sequence: 2,
-          step: "Phone Verification",
-          description: "Verify your phone number with OTP",
-          type: KycDetailType.phoneNo,
-          status: KYCStatus.InProgress,
-          hasAttachments: false,
-          attachments: [],
-          docType: "UserKycDetail",
-          lastUpdated: new Date().toISOString(),
-        },
-        {
-          id: "user-kyc-detail-3",
-          userId: "user-1",
-          userKycDetailId: "kyc-detail-3",
-          userKycLevelId: levelId || "kyc-level-1",
-          sequence: 3,
-          step: "Identity Document",
-          description: "Upload a valid government-issued ID document",
-          type: KycDetailType.identityProof,
-          status: KYCStatus.UnderReview,
-          hasAttachments: true,
-          attachments: [
-            {
-              id: "attachment-1",
-              filename: "passport.pdf",
-              type: "application/pdf",
-              url: "https://example.com/passport.pdf"
-            }
-          ],
-          docType: "UserKycDetail",
-          lastUpdated: new Date().toISOString(),
-        },
-        {
-          id: "user-kyc-detail-4",
-          userId: "user-1",
-          userKycDetailId: "kyc-detail-4",
-          userKycLevelId: levelId || "kyc-level-1",
-          sequence: 4,
-          step: "Address Proof",
-          description: "Upload a recent utility bill or bank statement",
-          type: KycDetailType.addressProof,
-          status: KYCStatus.NotSubmitted,
-          hasAttachments: false,
-          attachments: [],
-          docType: "UserKycDetail",
-          lastUpdated: new Date().toISOString(),
-        },
-      ];
-
-      setUserKycLevel(mockUserKycLevel);
-      setUserKycDetails(mockUserKycDetails);
+      // Fetch user KYC level data
+      // Note: We need to get the userId from the levelId or pass it as a parameter
+      // For now, we'll try to fetch by levelId and handle the API response
+      try {
+        // First, let's get all user KYC levels to find the one with matching levelId
+        const allLevels = await userKycLevelsApi.getAll();
+        const foundLevel = allLevels.find(level => level.id === levelId || level.userKycLevelId === levelId);
+        
+        if (foundLevel) {
+          setUserKycLevel(foundLevel);
+          
+          // Now fetch the KYC details for this user
+          const details = await userKycDetailsApi.getAll();
+          const userDetails = details.filter(detail => 
+            detail.userId === foundLevel.userId && 
+            detail.userKycLevelId === foundLevel.userKycLevelId
+          );
+          setUserKycDetails(userDetails);
+        } else {
+          console.error("User KYC level not found");
+        }
+      } catch (apiError) {
+        console.error("API error:", apiError);
+        // Fallback to empty state
+        setUserKycLevel(null);
+        setUserKycDetails([]);
+      }
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {

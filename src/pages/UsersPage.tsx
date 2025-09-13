@@ -5,13 +5,15 @@ import { Input } from '../components/ui/input'
 import { Badge } from '../components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import { useKYCAdmin, User, KYCStatus } from '../contexts/KYCAdminContext'
-import { Plus, Pencil, Trash2, Eye } from 'lucide-react'
+import { Plus, Pencil, Trash2, Eye, UserCheck } from 'lucide-react'
 import { userApi } from '../lib/userapi'
 import { getKycStatusDisplayText, getKycStatusColor } from '../utils/kycStatusConverter'
 import { LoadingSpinner } from '../components/ui/loading-spinner'
+import { useNavigate } from 'react-router-dom'
 
 export function UsersPage() {
   const { state, dispatch } = useKYCAdmin()
+  const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
 
@@ -42,6 +44,11 @@ export function UsersPage() {
         dispatch({ type: 'SET_ERROR', payload: 'Failed to delete user' })
       }
     }
+  }
+
+  const handleViewKYCLevels = (userId: string) => {
+    // Navigate to user KYC levels page for this specific user
+    navigate(`/admin/user-kyc-levels?userId=${userId}`)
   }
 
   const filteredUsers = state.users.filter(user => {
@@ -135,6 +142,14 @@ export function UsersPage() {
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm">
                     <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleViewKYCLevels(user.id)}
+                    title="View KYC Levels"
+                  >
+                    <UserCheck className="h-4 w-4" />
                   </Button>
                   <Button variant="outline" size="sm">
                     <Pencil className="h-4 w-4" />

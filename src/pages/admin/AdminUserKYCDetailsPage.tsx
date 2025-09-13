@@ -38,44 +38,19 @@ export function AdminUserKYCDetailsPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      // For now, we'll need to fetch all users and their KYC details
-      // In a real app, you might have an endpoint that returns user KYC details with user data
-      const [usersData] = await Promise.all([
+      
+      // Fetch real data from APIs
+      const [usersData, userKycDetailsData] = await Promise.all([
         userApi.list(),
+        userKycDetailsApi.getAll(),
       ]);
       
       setUsers(usersData);
-      
-      // For now, we'll create mock user KYC details based on users
-      // In a real app, you'd fetch actual user KYC details
-      const mockUserKycDetails: UserKYCDetail[] = usersData.slice(0, 5).flatMap((user, userIndex) => 
-        Array.from({ length: 3 }, (_, detailIndex) => ({
-          id: `user-kyc-detail-${userIndex}-${detailIndex}`,
-          userId: user.id,
-          userKycDetailId: `kyc-detail-${userIndex}-${detailIndex}`,
-          userKycLevelId: `kyc-level-${userIndex + 1}`,
-          sequence: detailIndex + 1,
-          step: `Step ${detailIndex + 1}`,
-          description: `KYC Detail ${detailIndex + 1} for ${user.firstName}`,
-          type: [KycDetailType.general, KycDetailType.phoneNo, KycDetailType.address][detailIndex % 3],
-          status: [KYCStatus.Approved, KYCStatus.InProgress, KYCStatus.UnderReview][detailIndex % 3],
-          hasAttachments: detailIndex % 2 === 0,
-          attachments: detailIndex % 2 === 0 ? [
-            {
-              id: `attachment-${userIndex}-${detailIndex}`,
-              filename: `document-${detailIndex + 1}.pdf`,
-              type: "application/pdf",
-              url: `https://example.com/attachment-${userIndex}-${detailIndex}.pdf`
-            }
-          ] : [],
-          docType: "UserKycDetail",
-          lastUpdated: new Date().toISOString(),
-        }))
-      );
-      
-      setUserKycDetails(mockUserKycDetails);
+      setUserKycDetails(userKycDetailsData);
     } catch (error) {
       console.error("Error fetching data:", error);
+      setUsers([]);
+      setUserKycDetails([]);
     } finally {
       setLoading(false);
     }
@@ -139,10 +114,6 @@ export function AdminUserKYCDetailsPage() {
     detail.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (loading) {
-    return <LoadingSpinner fullscreen={false} />;
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -183,7 +154,9 @@ export function AdminUserKYCDetailsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {filteredUserKycDetails.length === 0 ? (
+          {loading ? (
+            <LoadingSpinner fullscreen={false} />
+          ) : filteredUserKycDetails.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-neutral-500">No user KYC details found.</p>
             </div>

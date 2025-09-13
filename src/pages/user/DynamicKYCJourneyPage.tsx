@@ -9,6 +9,7 @@ import {
 import { Badge } from "../../components/ui/badge";
 import { Progress } from "../../components/ui/progress";
 import { CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { getKycStatusDisplayText } from "../../utils/kycStatusConverter";
 
 // Contexts
 import { useAuth } from "../../contexts/AuthContext";
@@ -277,7 +278,7 @@ export function DynamicKYCJourneyPage() {
                     : "secondary"
                 }
               >
-                {userKycLevel.status}
+                {getKycStatusDisplayText(userKycLevel.status)}
               </Badge>
             </div>
           </CardHeader>

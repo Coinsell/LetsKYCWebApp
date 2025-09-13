@@ -6,6 +6,7 @@ import { Badge } from '../../components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar'
 import { useKYCAdmin, User, KYCStatus } from '../../contexts/KYCAdminContext'
 import { ArrowLeft, Mail, Phone, MapPin, Calendar, Globe, FileText, CheckCircle, Clock, XCircle } from 'lucide-react'
+import { getKycStatusDisplayText } from '../../utils/kycStatusConverter'
 
 export function UserDetailPage() {
   const { userId } = useParams<{ userId: string }>()
@@ -113,14 +114,14 @@ export function UserDetailPage() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
-              {user.first_name} {user.last_name}
+              {user.firstName} {user.lastName}
             </h1>
             <p className="text-sm text-neutral-600 dark:text-neutral-400">
               User Details & KYC Status
             </p>
           </div>
         </div>
-        {user.kyc_status === KYCStatus.Submitted && (
+        {user.kycStatus === KYCStatus.Submitted && (
           <Button asChild>
             <Link to={`/admin/users/${user.id}/kyc-review`}>
               <FileText className="h-4 w-4 mr-2" />
@@ -142,24 +143,24 @@ export function UserDetailPage() {
               <Avatar className="h-16 w-16">
                 <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.login}`} />
                 <AvatarFallback className="text-lg">
-                  {user.first_name[0]}{user.last_name[0]}
+                  {user.firstName[0]}{user.lastName[0]}
                 </AvatarFallback>
               </Avatar>
               <div>
-                <h3 className="text-xl font-semibold">{user.first_name} {user.last_name}</h3>
+                <h3 className="text-xl font-semibold">{user.firstName} {user.lastName}</h3>
                 <p className="text-neutral-600 dark:text-neutral-400">{user.login}</p>
                 <Badge 
                   variant={
-                    user.kyc_status === KYCStatus.Approved ? 'success' :
-                    user.kyc_status === KYCStatus.Rejected ? 'destructive' :
-                    user.kyc_status === KYCStatus.UnderReview ? 'warning' :
-                    user.kyc_status === KYCStatus.Submitted ? 'warning' :
-                    user.kyc_status === KYCStatus.InProgress ? 'default' :
+                    user.kycStatus === KYCStatus.Approved ? 'success' :
+                    user.kycStatus === KYCStatus.Rejected ? 'destructive' :
+                    user.kycStatus === KYCStatus.UnderReview ? 'warning' :
+                    user.kycStatus === KYCStatus.Submitted ? 'warning' :
+                    user.kycStatus === KYCStatus.InProgress ? 'default' :
                     'secondary'
                   }
                   className="mt-2"
                 >
-                  {user.kyc_status}
+                  {getKycStatusDisplayText(user.kycStatus)}
                 </Badge>
               </div>
             </div>
@@ -179,7 +180,7 @@ export function UserDetailPage() {
                   <div>
                     <p className="font-medium">Date of Birth</p>
                     <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                      {formatDate(user.date_of_birth)}
+                      {formatDate(user.dateOfBirth)}
                     </p>
                   </div>
                 </div>
@@ -194,13 +195,13 @@ export function UserDetailPage() {
               </div>
 
               <div className="space-y-4">
-                {user.contacts.phone_numbers.length > 0 && (
+                {user.contacts.phoneNumbers.length > 0 && (
                   <div className="flex items-center gap-3">
                     <Phone className="h-5 w-5 text-neutral-500" />
                     <div>
                       <p className="font-medium">Phone</p>
                       <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                        {user.contacts.phone_numbers[0].country_code} {user.contacts.phone_numbers[0].phone_number}
+                        {user.contacts.phoneNumbers[0].countryCode} {user.contacts.phoneNumbers[0].phone}
                       </p>
                     </div>
                   </div>
@@ -215,7 +216,7 @@ export function UserDetailPage() {
                         <p>{user.contacts.addresses[0].line1}</p>
                         {user.contacts.addresses[0].line2 && <p>{user.contacts.addresses[0].line2}</p>}
                         <p>
-                          {user.contacts.addresses[0].city}, {user.contacts.addresses[0].state} {user.contacts.addresses[0].postal_code}
+                          {user.contacts.addresses[0].city}, {user.contacts.addresses[0].state} {user.contacts.addresses[0].postalCode}
                         </p>
                         <p>{user.contacts.addresses[0].country}</p>
                       </div>
@@ -228,7 +229,7 @@ export function UserDetailPage() {
                   <div>
                     <p className="font-medium">Joined</p>
                     <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                      {formatDate(user.created_at)}
+                      {formatDate(user.createdAt)}
                     </p>
                   </div>
                 </div>

@@ -27,19 +27,22 @@ export interface KYCDetail {
 export interface User {
   id: string;
   userId: string;
-  first_name: string;
-  last_name: string;
+  docType: string;
+  firstName: string;
+  lastName: string;
   login: string;
-  date_of_birth: string;
+  dateOfBirth: string; // ISO datetime string
   country: string;
   contacts: Contact;
-  id_proof?: string;
-  address_proof?: string;
-  kyc_level_id?: string;
-  kyc_status: KYCStatus;
+  idProof?: string;
+  addressProof?: string;
+  kycLevelId?: string;
+  kycStatus: KYCStatus;
+  kycJourneyLink?: string;
+  kycJourneyStatus: KycJourneyStatus;
   remarks?: string;
-  created_at: string;
-  updated_at?: string;
+  createdAt: string; // ISO datetime string
+  updatedAt?: string; // ISO datetime string
 }
 
 export interface UserKYCLevel {
@@ -53,11 +56,14 @@ export interface UserKYCLevel {
   maxWithdrawalAmount?: number;
   duration: number;
   timeUnit: TimeUnit;
+  docType: string;
+  lastUpdated: string; // ISO datetime string
 }
 
 export interface UserKYCDetail {
   id: string;
   userId: string;
+  userKycDetailId: string;
   userKycLevelId: string;
   sequence: number;
   step: string;
@@ -65,7 +71,9 @@ export interface UserKYCDetail {
   type: KycDetailType;
   status: KYCStatus;
   hasAttachments: boolean;
-  attachments?: Attachment[];
+  attachments: Attachment[];
+  docType: string;
+  lastUpdated: string; // ISO datetime string
 }
 
 export interface UserKYCUpdate {
@@ -113,17 +121,23 @@ export enum TimeUnit {
   MilliSecond = "MilliSecond",
 }
 
+export enum KycJourneyStatus {
+  NotGenerated = 0,
+  Generated = 1,
+  Sent = 2,
+}
+
 export interface Contact {
   emails: string[];
-  phone_numbers: PhoneNumber[];
+  phoneNumbers: PhoneNumber[];
   addresses: Address[];
 }
 
 export interface PhoneNumber {
-  country_code: string;
-  phone_number: string;
+  countryCode: string;
+  phone: string;
   type?: string;
-  is_primary: boolean;
+  isPrimary: boolean;
 }
 
 export interface Address {
@@ -131,10 +145,10 @@ export interface Address {
   line2?: string;
   city: string;
   state?: string;
-  postal_code: string;
+  postalCode: string;
   country: string;
   type?: string;
-  is_primary: boolean;
+  isPrimary: boolean;
 }
 
 export interface Attachment {

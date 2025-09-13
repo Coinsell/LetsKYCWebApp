@@ -61,8 +61,8 @@ export function UserKYCReviewPage() {
             }
           ],
           personalInfo: {
-            fullName: foundUser.first_name + ' ' + foundUser.last_name,
-            dateOfBirth: foundUser.date_of_birth,
+            fullName: foundUser.firstName + ' ' + foundUser.lastName,
+            dateOfBirth: foundUser.dateOfBirth,
             nationality: foundUser.country,
             occupation: 'Software Engineer',
             income: '$75,000 - $100,000'
@@ -91,7 +91,7 @@ export function UserKYCReviewPage() {
       
       // Update user status
       if (user) {
-        const updatedUser = { ...user, kyc_status: KYCStatus.Approved }
+        const updatedUser = { ...user, kycStatus: KYCStatus.Approved }
         dispatch({ type: 'UPDATE_USER', payload: updatedUser })
       }
       
@@ -116,7 +116,7 @@ export function UserKYCReviewPage() {
       
       // Update user status
       if (user) {
-        const updatedUser = { ...user, kyc_status: KYCStatus.Rejected, remarks: reviewComments }
+        const updatedUser = { ...user, kycStatus: KYCStatus.Rejected, remarks: reviewComments }
         dispatch({ type: 'UPDATE_USER', payload: updatedUser })
       }
       
@@ -183,7 +183,7 @@ export function UserKYCReviewPage() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
-              KYC Review: {user.first_name} {user.last_name}
+              KYC Review: {user.firstName} {user.lastName}
             </h1>
             <p className="text-sm text-neutral-600 dark:text-neutral-400">
               Submitted on {new Date(kycSubmission.submittedAt).toLocaleDateString()}

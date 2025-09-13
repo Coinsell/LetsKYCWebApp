@@ -3,7 +3,7 @@ import { api } from "./api";
 
 export const countryKycAssignmentApi = {
   listAll: async (): Promise<CountryKycAssignment[]> => {
-    return api.get<CountryKycAssignment[]>("/country_kyc_assignments");
+    return api.get<CountryKycAssignment[]>("country_kyc_assignments");
   },
 
   listByCountry: async (

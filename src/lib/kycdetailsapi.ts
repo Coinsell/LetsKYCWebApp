@@ -1,8 +1,9 @@
-// src/api/kycDetailsApi.ts
+// src/lib/kycdetailsapi.ts
 import { KYCDetail } from "@/contexts/KYCAdminContext";
 import { api } from "./api";
 
 export const kycDetailsApi = {
+  // Get all KYC details
   getAll: async (): Promise<KYCDetail[]> => {
     try {
       return await api.get<KYCDetail[]>("kyc_details");
@@ -12,6 +13,7 @@ export const kycDetailsApi = {
     }
   },
 
+  // Get KYC detail by ID
   getById: async (id: string): Promise<KYCDetail> => {
     try {
       return await api.get<KYCDetail>(`kyc_details/${id}`);
@@ -21,15 +23,18 @@ export const kycDetailsApi = {
     }
   },
 
-  getByLevel: async (levelId: string): Promise<KYCDetail[]> => {
+  // Get KYC details by level ID
+  getByLevel: async (kycLevelId: string): Promise<KYCDetail[]> => {
     try {
-      return await api.get<KYCDetail[]>(`kyc_details/level/${levelId}`);
+      return await api.get<KYCDetail[]>(`kyc_details/level/${kycLevelId}`);
     } catch (error: any) {
-      console.error(`Error fetching KYC details for level=${levelId}:`, error);
+      console.error(`Error fetching KYC details for level ${kycLevelId}:`, error);
       throw error;
     }
   },
 
+
+  // Create new KYC detail
   create: async (kycDetail: KYCDetail): Promise<KYCDetail> => {
     try {
       return await api.post<KYCDetail>("kyc_details", kycDetail);
@@ -39,6 +44,7 @@ export const kycDetailsApi = {
     }
   },
 
+  // Update KYC detail by ID
   update: async (id: string, kycDetail: KYCDetail): Promise<KYCDetail> => {
     try {
       return await api.put<KYCDetail>(`kyc_details/${id}`, kycDetail);
@@ -48,19 +54,12 @@ export const kycDetailsApi = {
     }
   },
 
-  delete: async (
-    id: string,
-    kycLevelId: string
-  ): Promise<{ message: string }> => {
+  // Delete KYC detail by ID
+  delete: async (id: string, kycLevelId: string): Promise<{ message: string }> => {
     try {
-      return await api.delete<{ message: string }>(
-        `kyc_details/${id}?kycLevelId=${kycLevelId}` // use snake_case to match FastAPI
-      );
+      return await api.delete<{ message: string }>(`kyc_details/${id}?kycLevelId=${kycLevelId}`);
     } catch (error: any) {
-      console.error(
-        `Error deleting KYC detail with id=${id} and kycLevelId=${kycLevelId}:`,
-        error
-      );
+      console.error(`Error deleting KYC detail with id=${id}:`, error);
       throw error;
     }
   },

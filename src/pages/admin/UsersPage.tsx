@@ -7,6 +7,8 @@ import { Badge } from '../../components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
 import { useKYCAdmin, User, KYCStatus } from '../../contexts/KYCAdminContext'
 import { Plus, Eye, Pencil, Trash2, FileText } from 'lucide-react'
+import { userApi } from '../../lib/userapi'
+import { getKycStatusDisplayText, getKycStatusColor } from '../../utils/kycStatusConverter'
 
 export function UsersPage() {
   const { state, dispatch } = useKYCAdmin()
@@ -20,98 +22,10 @@ export function UsersPage() {
   const fetchUsers = async () => {
     dispatch({ type: 'SET_LOADING', payload: true })
     try {
-      // Mock API call - replace with actual API
-      const mockUsers: User[] = [
-        {
-          id: '1',
-          userId: 'user-1',
-          first_name: 'John',
-          last_name: 'Doe',
-          login: 'john.doe@example.com',
-          date_of_birth: '1990-01-15',
-          country: 'United States',
-          contacts: {
-            emails: ['john.doe@example.com'],
-            phone_numbers: [{
-              country_code: '+1',
-              phone_number: '5551234567',
-              type: 'mobile',
-              is_primary: true
-            }],
-            addresses: [{
-              line1: '123 Main St',
-              line2: 'Apt 4B',
-              city: 'New York',
-              state: 'NY',
-              postal_code: '10001',
-              country: 'United States',
-              type: 'home',
-              is_primary: true
-            }]
-          },
-          kyc_status: KYCStatus.InProgress,
-          created_at: '2024-01-15T10:00:00Z'
-        },
-        {
-          id: '2',
-          userId: 'user-2',
-          first_name: 'Jane',
-          last_name: 'Smith',
-          login: 'jane.smith@example.com',
-          date_of_birth: '1985-05-20',
-          country: 'Canada',
-          contacts: {
-            emails: ['jane.smith@example.com'],
-            phone_numbers: [{
-              country_code: '+1',
-              phone_number: '5559876543',
-              type: 'mobile',
-              is_primary: true
-            }],
-            addresses: [{
-              line1: '456 Oak Ave',
-              city: 'Toronto',
-              state: 'ON',
-              postal_code: 'M5V 3A8',
-              country: 'Canada',
-              type: 'home',
-              is_primary: true
-            }]
-          },
-          kyc_status: KYCStatus.Submitted,
-          created_at: '2024-01-10T14:30:00Z'
-        },
-        {
-          id: '3',
-          userId: 'user-3',
-          first_name: 'Alice',
-          last_name: 'Johnson',
-          login: 'alice.johnson@example.com',
-          date_of_birth: '1992-08-10',
-          country: 'United Kingdom',
-          contacts: {
-            emails: ['alice.johnson@example.com'],
-            phone_numbers: [{
-              country_code: '+44',
-              phone_number: '7700900123',
-              type: 'mobile',
-              is_primary: true
-            }],
-            addresses: [{
-              line1: '789 High Street',
-              city: 'London',
-              postal_code: 'SW1A 1AA',
-              country: 'United Kingdom',
-              type: 'home',
-              is_primary: true
-            }]
-          },
-          kyc_status: KYCStatus.Approved,
-          created_at: '2024-01-05T09:15:00Z'
-        }
-      ]
-      dispatch({ type: 'SET_USERS', payload: mockUsers })
+      const users = await userApi.list()
+      dispatch({ type: 'SET_USERS', payload: users })
     } catch (error) {
+      console.error('Error fetching users:', error)
       dispatch({ type: 'SET_ERROR', payload: 'Failed to fetch users' })
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false })
@@ -121,8 +35,10 @@ export function UsersPage() {
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this user?')) {
       try {
+        await userApi.delete(id)
         dispatch({ type: 'DELETE_USER', payload: id })
       } catch (error) {
+        console.error('Error deleting user:', error)
         dispatch({ type: 'SET_ERROR', payload: 'Failed to delete user' })
       }
     }
@@ -130,10 +46,10 @@ export function UsersPage() {
 
   const filteredUsers = state.users.filter(user => {
     const matchesSearch = 
-      user.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.login.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === 'all' || user.kyc_status === statusFilter
+    const matchesStatus = statusFilter === 'all' || user.kycStatus === statusFilter
     return matchesSearch && matchesStatus
   })
 
@@ -193,30 +109,23 @@ export function UsersPage() {
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="font-semibold text-lg">
-                      {user.first_name} {user.last_name}
+                      {user.firstName} {user.lastName}
                     </h3>
-                    <Badge 
-                      variant={
-                        user.kyc_status === KYCStatus.Approved ? 'success' :
-                        user.kyc_status === KYCStatus.Rejected ? 'destructive' :
-                        user.kyc_status === KYCStatus.UnderReview ? 'warning' :
-                        user.kyc_status === KYCStatus.Submitted ? 'warning' :
-                        user.kyc_status === KYCStatus.InProgress ? 'default' :
-                        'secondary'
-                      }
+                    <span
+                      className={`px-3 py-1 rounded-full text-sm font-medium ${getKycStatusColor(user.kycStatus)}`}
                     >
-                      {user.kyc_status}
-                    </Badge>
+                      {getKycStatusDisplayText(user.kycStatus)}
+                    </span>
                   </div>
                   <p className="text-neutral-600 dark:text-neutral-400 mb-2">{user.login}</p>
                   <div className="flex gap-4 text-sm text-neutral-500">
-                    <span>DOB: {formatDate(user.date_of_birth)}</span>
+                    <span>DOB: {formatDate(user.dateOfBirth)}</span>
                     <span>Country: {user.country}</span>
-                    <span>Joined: {formatDate(user.created_at)}</span>
+                    <span>Joined: {formatDate(user.createdAt)}</span>
                   </div>
-                  {user.contacts.phone_numbers.length > 0 && (
+                  {user.contacts.phoneNumbers.length > 0 && (
                     <div className="text-sm text-neutral-500 mt-1">
-                      Phone: {user.contacts.phone_numbers[0].country_code} {user.contacts.phone_numbers[0].phone_number}
+                      Phone: {user.contacts.phoneNumbers[0].countryCode} {user.contacts.phoneNumbers[0].phone}
                     </div>
                   )}
                 </div>
@@ -226,7 +135,7 @@ export function UsersPage() {
                       <Eye className="h-4 w-4" />
                     </Link>
                   </Button>
-                  {user.kyc_status === KYCStatus.Submitted && (
+                  {user.kycStatus === KYCStatus.Submitted && (
                     <Button variant="outline" size="sm" asChild>
                       <Link to={`/admin/users/${user.id}/kyc-review`}>
                         <FileText className="h-4 w-4" />

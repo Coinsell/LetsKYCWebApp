@@ -20,19 +20,20 @@ export function mapFormDataToUser(
   return {
     id: uuidv4(),
     userId: authUser?.id || uuidv4(),
-    first_name: firstName,
-    last_name: lastName,
+    docType: "User",
+    firstName: firstName,
+    lastName: lastName,
     login: authUser?.email || "",
-    date_of_birth: formData.dateOfBirth,
+    dateOfBirth: formData.dateOfBirth,
     country: formData.country || "India",
     contacts: {
       emails: [authUser?.email || ""],
-      phone_numbers: [
+      phoneNumbers: [
         {
-          country_code: "+91",
-          phone_number: formData.mobile,
+          countryCode: "+91",
+          phone: formData.mobile,
           type: "mobile",
-          is_primary: true,
+          isPrimary: true,
         },
       ],
       addresses: [
@@ -41,16 +42,17 @@ export function mapFormDataToUser(
           line2: formData.addressLine2 || "",
           city: formData.city,
           state: formData.state,
-          postal_code: formData.pincode,
+          postalCode: formData.pincode,
           country: formData.country || "India",
           type: "home",
-          is_primary: true,
+          isPrimary: true,
         },
       ],
     },
-    id_proof: formData.pan,
-    kyc_status: KYCStatus.NotSubmitted,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    idProof: formData.pan,
+    kycStatus: KYCStatus.NotSubmitted,
+    kycJourneyStatus: 0, // NotGenerated
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
 }

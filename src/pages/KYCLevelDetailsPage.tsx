@@ -24,24 +24,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { SortableList } from "@/components/common/SortableList";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { getKycStatusDisplayText, getKycStatusColor } from "@/utils/kycStatusConverter";
 
 // Enum-label maps
-const kycStatusLabels: Record<KYCStatus, string> = {
-  [KYCStatus.NotSubmitted]: "Not Submitted",
-  [KYCStatus.InProgress]: "In Progress",
-  [KYCStatus.Submitted]: "Submitted",
-  [KYCStatus.UnderReview]: "Under Review",
-  [KYCStatus.Approved]: "Approved",
-  [KYCStatus.Rejected]: "Rejected",
-};
-const kycStatusColors: Record<KYCStatus, string> = {
-  [KYCStatus.NotSubmitted]: "bg-gray-200 text-gray-700",
-  [KYCStatus.InProgress]: "bg-blue-200 text-blue-700",
-  [KYCStatus.Submitted]: "bg-yellow-200 text-yellow-800",
-  [KYCStatus.UnderReview]: "bg-purple-200 text-purple-700",
-  [KYCStatus.Approved]: "bg-green-200 text-green-800",
-  [KYCStatus.Rejected]: "bg-red-200 text-red-800",
-};
 const kycDetailTypeLabels: Record<KycDetailType, string> = {
   general: "General",
   phoneNo: "Phone Number",
@@ -364,7 +349,7 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
   }));
   const kycStatusOptions = Object.values(KYCStatus).map((v) => ({
     value: v,
-    label: kycStatusLabels[v] || v,
+    label: getKycStatusDisplayText(v),
   }));
   const kycTypeOptions = Object.values(KycDetailType).map((v) => ({
     value: v,
@@ -545,11 +530,9 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
             </h2>
             <p className="text-gray-700">{level.description}</p>
             <span
-              className={`px-3 py-1 rounded-full text-sm font-medium ${
-                kycStatusColors[level.status]
-              }`}
+              className={`px-3 py-1 rounded-full text-sm font-medium ${getKycStatusColor(level.status)}`}
             >
-              {kycStatusLabels[level.status]}
+              {getKycStatusDisplayText(level.status)}
             </span>
             <div className="grid grid-cols-2 gap-4 pt-4">
               <div>
@@ -656,9 +639,9 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
                       })
                     }
                   >
-                    {Object.entries(kycStatusLabels).map(([key, label]) => (
-                      <option key={key} value={key}>
-                        {label}
+                    {Object.values(KYCStatus).map((status) => (
+                      <option key={status} value={status}>
+                        {getKycStatusDisplayText(status)}
                       </option>
                     ))}
                   </select>
@@ -785,15 +768,9 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
                         </span>
                         <h4 className="font-semibold">{detail.step}</h4>
                         <span
-                          className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full ${
-                            detail.status === KYCStatus.Approved
-                              ? "bg-green-100 text-green-800"
-                              : detail.status === KYCStatus.Rejected
-                              ? "bg-red-100 text-red-800"
-                              : "bg-yellow-100 text-yellow-800"
-                          }`}
+                          className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full ${getKycStatusColor(detail.status)}`}
                         >
-                          {kycStatusLabels[detail.status]}
+                          {getKycStatusDisplayText(detail.status)}
                         </span>
                       </div>
                       <p className="text-gray-600 mb-2">{detail.description}</p>
@@ -888,13 +865,11 @@ const KYCLevelDetailsPage: React.FC<Props> = ({ mode }) => {
                               })
                             }
                           >
-                            {Object.entries(kycStatusLabels).map(
-                              ([key, label]) => (
-                                <option key={key} value={key}>
-                                  {label}
-                                </option>
-                              )
-                            )}
+                            {Object.values(KYCStatus).map((status) => (
+                              <option key={status} value={status}>
+                                {getKycStatusDisplayText(status)}
+                              </option>
+                            ))}
                           </select>
                         </div>
 

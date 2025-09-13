@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Badge } from '../components/ui/badge'
 import { useKYCAdmin, KYCStatus } from '../contexts/KYCAdminContext'
 import { ShieldCheck, FileText, Users, ClipboardList } from 'lucide-react'
+import { getKycStatusDisplayText } from '../utils/kycStatusConverter'
 
 export function DashboardPage() {
   const { state } = useKYCAdmin()
@@ -39,7 +40,7 @@ export function DashboardPage() {
   ]
 
   const kycStatusCounts = Object.values(KYCStatus).reduce((acc, status) => {
-    acc[status] = state.users.filter(user => user.kyc_status === status).length
+    acc[status] = state.users.filter(user => user.kycStatus === status).length
     return acc
   }, {} as Record<KYCStatus, number>)
 
@@ -113,7 +114,18 @@ export function DashboardPage() {
                     <p className="text-sm font-medium">User ID: {update.userId}</p>
                     <p className="text-xs text-neutral-600">{update.updateType}</p>
                   </div>
-                  <Badge variant="outline">{update.status}</Badge>
+                  <Badge 
+                    variant={
+                      update.status === KYCStatus.Approved ? 'success' :
+                      update.status === KYCStatus.Rejected ? 'destructive' :
+                      update.status === KYCStatus.UnderReview ? 'warning' :
+                      update.status === KYCStatus.Submitted ? 'warning' :
+                      update.status === KYCStatus.InProgress ? 'default' :
+                      'secondary'
+                    }
+                  >
+                    {getKycStatusDisplayText(update.status)}
+                  </Badge>
                 </div>
               ))}
               {state.userKycUpdates.length === 0 && (

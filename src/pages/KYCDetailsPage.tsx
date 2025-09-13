@@ -26,6 +26,7 @@ import { Plus, Pencil, Trash2, ArrowUp, ArrowDown, Layers } from "lucide-react";
 import { kycDetailsApi } from "../lib/kycdetailsapi";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useParams, useNavigate } from "react-router-dom";
+import { getKycStatusDisplayText, getKycStatusColor } from "../utils/kycStatusConverter";
 
 export function KYCDetailsPage() {
   const { state, dispatch } = useKYCAdmin();
@@ -181,17 +182,11 @@ export function KYCDetailsPage() {
                         Step {detail.sequence}
                       </Badge>
                       <h3 className="font-semibold text-lg">{detail.step}</h3>
-                      <Badge
-                        variant={
-                          detail.status === KYCStatus.Approved
-                            ? "success"
-                            : detail.status === KYCStatus.Rejected
-                            ? "destructive"
-                            : "warning"
-                        }
+                      <span
+                        className={`px-3 py-1 rounded-full text-sm font-medium ${getKycStatusColor(detail.status)}`}
                       >
-                        {detail.status}
-                      </Badge>
+                        {getKycStatusDisplayText(detail.status)}
+                      </span>
                     </div>
                     <p className="text-neutral-600 mb-2">
                       {detail.description}

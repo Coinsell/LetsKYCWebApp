@@ -19,6 +19,7 @@ import { Plus, Pencil, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { kycLevelsApi } from "../lib/kyclevelsapi";
 import { LoadingSpinner } from "../components/ui/loading-spinner";
+import { getKycStatusDisplayText, getKycStatusColor } from "../utils/kycStatusConverter";
 
 export function KYCLevelsPage() {
   const { state, dispatch } = useKYCAdmin();
@@ -60,33 +61,10 @@ export function KYCLevelsPage() {
   const fetchKYCLevels = async () => {
     dispatch({ type: "SET_LOADING", payload: true });
     try {
-      // Mock API call - replace with actual API
-      const mockLevels: KYCLevel[] = [
-        {
-          id: "1",
-          kycLevelId: "kyc-level-1",
-          code: "BASIC",
-          description: "Basic KYC Level for new users",
-          status: KYCStatus.Approved,
-          maxDepositAmount: 10000,
-          maxWithdrawalAmount: 5000,
-          duration: 30,
-          timeUnit: TimeUnit.Day,
-        },
-        {
-          id: "2",
-          kycLevelId: "kyc-level-2",
-          code: "INTERMEDIATE",
-          description: "Intermediate KYC Level with higher limits",
-          status: KYCStatus.Approved,
-          maxDepositAmount: 50000,
-          maxWithdrawalAmount: 25000,
-          duration: 6,
-          timeUnit: TimeUnit.Month,
-        },
-      ];
-      dispatch({ type: "SET_KYC_LEVELS", payload: mockLevels });
+      const levels = await kycLevelsApi.list();
+      dispatch({ type: "SET_KYC_LEVELS", payload: levels });
     } catch (error) {
+      console.error("Error fetching KYC levels:", error);
       dispatch({ type: "SET_ERROR", payload: "Failed to fetch KYC levels" });
     } finally {
       dispatch({ type: "SET_LOADING", payload: false });
@@ -221,17 +199,11 @@ export function KYCLevelsPage() {
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="font-semibold text-lg">{level.code}</h3>
-                    <Badge
-                      variant={
-                        level.status === KYCStatus.Approved
-                          ? "success"
-                          : level.status === KYCStatus.Rejected
-                          ? "destructive"
-                          : "warning"
-                      }
+                    <span
+                      className={`px-3 py-1 rounded-full text-sm font-medium ${getKycStatusColor(level.status)}`}
                     >
-                      {level.status}
-                    </Badge>
+                      {getKycStatusDisplayText(level.status)}
+                    </span>
                   </div>
                   <p className="text-neutral-600 mb-2">{level.description}</p>
                   <div className="flex gap-4 text-sm text-neutral-500">

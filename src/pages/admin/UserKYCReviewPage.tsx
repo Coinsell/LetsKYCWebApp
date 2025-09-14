@@ -6,6 +6,8 @@ import { Badge } from '../../components/ui/badge'
 import { Textarea } from '../../components/ui/textarea'
 import { Label } from '../../components/ui/label'
 import { useKYCAdmin, User, KYCStatus } from '../../contexts/KYCAdminContext'
+import { userApi } from '../../lib/userapi'
+import { LoadingSpinner } from '../../components/ui/loading-spinner'
 import { ArrowLeft, CheckCircle, XCircle, FileText, Download, Eye } from 'lucide-react'
 
 export function UserKYCReviewPage() {
@@ -16,20 +18,86 @@ export function UserKYCReviewPage() {
   const [kycSubmission, setKycSubmission] = useState<any>(null)
   const [reviewComments, setReviewComments] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    console.log('useEffect triggered, userId:', userId)
     if (userId) {
+      console.log('Calling fetchKYCSubmission with userId:', userId)
       fetchKYCSubmission(userId)
+    } else {
+      console.log('No userId provided')
     }
   }, [userId])
 
+
   const fetchKYCSubmission = async (id: string) => {
+    console.log('=== fetchKYCSubmission called ===')
+    console.log('User ID:', id)
+    console.log('User ID type:', typeof id)
+    console.log('User ID length:', id.length)
+    console.log('API base URL:', import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000')
+    
     try {
-      const foundUser = state.users.find(u => u.id === id)
+      setLoading(true)
+      setError(null)
+      
+      let foundUser: User | null = null
+      
+      // First try to find user in state (if any users are loaded)
+      if (state.users.length > 0) {
+        console.log('Checking state for user, users count:', state.users.length)
+        foundUser = state.users.find(u => u.id === id) || null
+        console.log('User found in state:', !!foundUser)
+      }
+      
+      // If not found in state, fetch from API
+      if (!foundUser) {
+        console.log('Fetching user from API...')
+        console.log('API endpoint will be: users/' + id)
+        
+        // Test API connectivity first
+        try {
+          console.log('Testing API connectivity...')
+          const testResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/users`)
+          console.log('API test response status:', testResponse.status)
+          console.log('API test response ok:', testResponse.ok)
+        } catch (testError) {
+          console.error('API connectivity test failed:', testError)
+        }
+        
+        try {
+          foundUser = await userApi.get(id)
+          console.log('User fetched from API successfully:', foundUser)
+        } catch (apiError) {
+          console.error('API call failed for specific user:', apiError)
+          console.error('Error details:', {
+            message: apiError.message,
+            status: apiError.status,
+            response: apiError.response,
+            stack: apiError.stack
+          })
+          
+          // Try a direct fetch to see what's happening
+          try {
+            console.log('Trying direct fetch...')
+            const directResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/users/${id}`)
+            console.log('Direct fetch status:', directResponse.status)
+            console.log('Direct fetch ok:', directResponse.ok)
+            const directData = await directResponse.text()
+            console.log('Direct fetch response:', directData)
+          } catch (directError) {
+            console.error('Direct fetch failed:', directError)
+          }
+        }
+      }
+      
       if (foundUser) {
+        console.log('User found, setting user:', foundUser)
         setUser(foundUser)
         
-        // Mock KYC submission data
+        // Mock KYC submission data (you can replace this with real API call later)
         const mockSubmission = {
           id: 'kyc-sub-1',
           userId: id,
@@ -76,10 +144,19 @@ export function UserKYCReviewPage() {
           riskScore: 85,
           complianceFlags: []
         }
+        
+        console.log('Setting KYC submission:', mockSubmission)
         setKycSubmission(mockSubmission)
+      } else {
+        console.error('User not found in database')
+        setError('User not found in database')
       }
+      
     } catch (error) {
       console.error('Failed to fetch KYC submission:', error)
+      setError('Failed to load KYC submission')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -151,7 +228,7 @@ export function UserKYCReviewPage() {
     return 'text-red-600'
   }
 
-  if (!user || !kycSubmission) {
+  if (loading) {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
@@ -164,7 +241,39 @@ export function UserKYCReviewPage() {
         </div>
         <Card>
           <CardContent className="p-6">
-            <p className="text-center text-neutral-500">KYC submission not found</p>
+            <LoadingSpinner fullscreen={false} />
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (error || !user || !kycSubmission) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/admin/users">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Users
+            </Link>
+          </Button>
+        </div>
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center">
+              <p className="text-neutral-500 mb-2">
+                {error || 'KYC submission not found'}
+              </p>
+              {userId && (
+                <p className="text-sm text-neutral-400">
+                  User ID: {userId}
+                </p>
+              )}
+              <p className="text-sm text-neutral-400 mt-2">
+                Check the browser console for detailed logs.
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>

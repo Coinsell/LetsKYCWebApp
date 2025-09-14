@@ -5,6 +5,8 @@ import { Button } from '../../components/ui/button'
 import { Badge } from '../../components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar'
 import { useKYCAdmin, User, KYCStatus } from '../../contexts/KYCAdminContext'
+import { userApi } from '../../lib/userapi'
+import { LoadingSpinner } from '../../components/ui/loading-spinner'
 import { ArrowLeft, Mail, Phone, MapPin, Calendar, Globe, FileText, CheckCircle, Clock, XCircle } from 'lucide-react'
 import { getKycStatusDisplayText } from '../../utils/kycStatusConverter'
 
@@ -13,6 +15,8 @@ export function UserDetailPage() {
   const { state } = useKYCAdmin()
   const [user, setUser] = useState<User | null>(null)
   const [kycProgress, setKycProgress] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (userId) {
@@ -22,8 +26,28 @@ export function UserDetailPage() {
 
   const fetchUserDetails = async (id: string) => {
     try {
-      // Find user from state or fetch from API
-      const foundUser = state.users.find(u => u.id === id)
+      setLoading(true)
+      setError(null)
+      
+      console.log('Fetching user details for ID:', id)
+      
+      // First try to find user in state
+      let foundUser = state.users.find(u => u.id === id)
+      console.log('User found in state:', !!foundUser)
+      
+      // If not found in state, fetch from API
+      if (!foundUser) {
+        console.log('User not found in state, fetching from API...')
+        try {
+          foundUser = await userApi.get(id)
+          console.log('User fetched from API:', foundUser)
+        } catch (apiError) {
+          console.error('API call failed:', apiError)
+          setError('User not found in database')
+          return
+        }
+      }
+      
       if (foundUser) {
         setUser(foundUser)
         
@@ -36,9 +60,14 @@ export function UserDetailPage() {
           { step: 'Address Proof Upload', status: 'pending', completedAt: null },
         ]
         setKycProgress(mockProgress)
+      } else {
+        setError('User not found')
       }
     } catch (error) {
       console.error('Failed to fetch user details:', error)
+      setError('Failed to load user details')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -82,7 +111,7 @@ export function UserDetailPage() {
     })
   }
 
-  if (!user) {
+  if (loading) {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
@@ -95,7 +124,34 @@ export function UserDetailPage() {
         </div>
         <Card>
           <CardContent className="p-6">
-            <p className="text-center text-neutral-500">User not found</p>
+            <LoadingSpinner fullscreen={false} />
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (error || !user) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/admin/users">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Users
+            </Link>
+          </Button>
+        </div>
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-center text-neutral-500">
+              {error || 'User not found'}
+            </p>
+            {userId && (
+              <p className="text-sm text-neutral-400 mt-2">
+                User ID: {userId}
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>

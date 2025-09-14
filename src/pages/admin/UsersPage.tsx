@@ -277,12 +277,7 @@ export function UsersPage() {
                   )}
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" asChild>
-                    <Link to={`/admin/users/${user.id}`}>
-                      <Eye className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                  <Button 
+                  <Button
                     variant="outline" 
                     size="sm"
                     onClick={() => handleManageKYC(user.id)}
@@ -290,7 +285,12 @@ export function UsersPage() {
                   >
                     <FileText className="h-4 w-4" />
                   </Button>
-                  {user.kycStatus === KYCStatus.Submitted && (
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to={`/admin/users/${user.id}`}>
+                      <Eye className="h-4 w-4" />
+                    </Link>
+                  </Button>                  
+                  {(user.kycStatus === KYCStatus.Submitted || user.kycStatus === KYCStatus.UnderReview) && (
                     <Button variant="outline" size="sm" asChild title="KYC Review">
                       <Link to={`/admin/users/${user.id}/kyc-review`}>
                         <FileText className="h-4 w-4" />

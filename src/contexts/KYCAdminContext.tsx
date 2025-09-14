@@ -158,6 +158,58 @@ export interface Attachment {
   type: string;
 }
 
+// Pagination types
+export interface PaginationParams {
+  page: number;
+  page_size: number;
+  fetch_all: boolean;
+  search?: string;
+  sort_by?: SortCondition[];
+  filters?: FilterCondition[];
+}
+
+export interface SortCondition {
+  field: string;
+  order: SortOrder;
+}
+
+export interface FilterCondition {
+  field: string;
+  operator: FilterOperator;
+  value?: string | number | boolean | any[];
+}
+
+export enum SortOrder {
+  ASC = "asc",
+  DESC = "desc"
+}
+
+export enum FilterOperator {
+  EQUALS = "eq",
+  NOT_EQUALS = "ne",
+  CONTAINS = "contains",
+  STARTS_WITH = "startsWith",
+  ENDS_WITH = "endsWith",
+  GREATER_THAN = "gt",
+  GREATER_THAN_OR_EQUAL = "gte",
+  LESS_THAN = "lt",
+  LESS_THAN_OR_EQUAL = "lte",
+  IN = "in",
+  NOT_IN = "notIn",
+  IS_NULL = "isNull",
+  IS_NOT_NULL = "isNotNull"
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  total_count: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+  has_next: boolean;
+  has_previous: boolean;
+}
+
 export interface KYCAdminState {
   countries: Country[];
   assignments: CountryKycAssignment[];

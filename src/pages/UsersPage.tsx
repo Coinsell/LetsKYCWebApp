@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Badge } from '../components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
-import { useKYCAdmin, User, KYCStatus } from '../contexts/KYCAdminContext'
-import { Plus, Pencil, Trash2, Eye, FileText } from 'lucide-react'
+import { useKYCAdmin, User, KYCStatus, PaginatedResponse, PaginationParams, FilterCondition, FilterOperator, SortCondition, SortOrder } from '../contexts/KYCAdminContext'
+import { Plus, Pencil, Trash2, Eye, FileText, ChevronLeft, ChevronRight, Search } from 'lucide-react'
 import { userApi } from '../lib/userapi'
 import { userKycLevelsApi } from '../lib/userkyclevelsapi'
 import { getKycStatusDisplayText, getKycStatusColor } from '../utils/kycStatusConverter'
@@ -15,31 +15,81 @@ import { useNavigate } from 'react-router-dom'
 export function UsersPage() {
   const { state, dispatch } = useKYCAdmin()
   const navigate = useNavigate()
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
+  const [totalPages, setTotalPages] = useState(0)
+  const [totalCount, setTotalCount] = useState(0)
+  const [hasNext, setHasNext] = useState(false)
+  const [hasPrevious, setHasPrevious] = useState(false)
+  
+  // Filter and search state
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [sortField, setSortField] = useState('createdAt')
+  const [sortOrder, setSortOrder] = useState<SortOrder>(SortOrder.DESC)
+  
+  // Loading state
+  const [loading, setLoading] = useState(false)
+  
+  // Users data
+  const [users, setUsers] = useState<User[]>([])
 
   useEffect(() => {
     fetchUsers()
-  }, [])
+  }, [currentPage, pageSize, searchTerm, statusFilter, sortField, sortOrder])
 
-  const fetchUsers = async () => {
-    dispatch({ type: 'SET_LOADING', payload: true })
+  const fetchUsers = useCallback(async () => {
+    setLoading(true)
     try {
-      const users = await userApi.list()
-      dispatch({ type: 'SET_USERS', payload: users })
+      // Build pagination parameters
+      const paginationParams: PaginationParams = {
+        page: currentPage,
+        page_size: pageSize,
+        fetch_all: false,
+        search: searchTerm || undefined,
+        sort_by: [
+          {
+            field: sortField,
+            order: sortOrder
+          }
+        ]
+      }
+
+      // Add status filter if not 'all'
+      if (statusFilter !== 'all') {
+        paginationParams.filters = [
+          {
+            field: 'kycStatus',
+            operator: FilterOperator.EQUALS,
+            value: statusFilter
+          }
+        ]
+      }
+
+      const response: PaginatedResponse<User> = await userApi.listEnhanced(paginationParams)
+      
+      setUsers(response.items)
+      setTotalPages(response.total_pages)
+      setTotalCount(response.total_count)
+      setHasNext(response.has_next)
+      setHasPrevious(response.has_previous)
+      
     } catch (error) {
       console.error('Error fetching users:', error)
       dispatch({ type: 'SET_ERROR', payload: 'Failed to fetch users' })
     } finally {
-      dispatch({ type: 'SET_LOADING', payload: false })
+      setLoading(false)
     }
-  }
+  }, [currentPage, pageSize, searchTerm, statusFilter, sortField, sortOrder, dispatch])
 
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this user?')) {
       try {
         await userApi.delete(id)
-        dispatch({ type: 'DELETE_USER', payload: id })
+        // Refresh the current page after deletion
+        fetchUsers()
       } catch (error) {
         console.error('Error deleting user:', error)
         dispatch({ type: 'SET_ERROR', payload: 'Failed to delete user' })
@@ -67,14 +117,37 @@ export function UsersPage() {
     }
   }
 
-  const filteredUsers = state.users.filter(user => {
-    const matchesSearch = 
-      user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.login.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === 'all' || user.kycStatus === statusFilter
-    return matchesSearch && matchesStatus
-  })
+  // Pagination handlers
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
+
+  const handlePageSizeChange = (newPageSize: string) => {
+    setPageSize(Number(newPageSize))
+    setCurrentPage(1) // Reset to first page when changing page size
+  }
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value)
+    setCurrentPage(1) // Reset to first page when searching
+  }
+
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value)
+    setCurrentPage(1) // Reset to first page when filtering
+  }
+
+  const handleSortChange = (field: string) => {
+    if (field === sortField) {
+      // Toggle sort order if same field
+      setSortOrder(sortOrder === SortOrder.ASC ? SortOrder.DESC : SortOrder.ASC)
+    } else {
+      // Set new field with default sort order
+      setSortField(field)
+      setSortOrder(SortOrder.DESC)
+    }
+    setCurrentPage(1) // Reset to first page when sorting
+  }
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString()
@@ -103,7 +176,7 @@ export function UsersPage() {
               <CardDescription>Manage user accounts and their KYC journey</CardDescription>
             </div>
             <div className="flex gap-4">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder="Filter by Status" />
                 </SelectTrigger>
@@ -116,21 +189,67 @@ export function UsersPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <Input
-                placeholder="Search users..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-72"
-              />
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Search users..."
+                  value={searchTerm}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  className="w-72 pl-10"
+                />
+              </div>
+              <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+                <SelectTrigger className="w-24">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          {state.loading ? (
+          {loading ? (
             <LoadingSpinner fullscreen={false} />
           ) : (
             <div className="space-y-4">
-              {filteredUsers.map((user) => (
+              {/* Results summary */}
+              <div className="flex justify-between items-center text-sm text-gray-600 mb-4">
+                <span>
+                  Showing {users.length} of {totalCount} users
+                  {searchTerm && ` for "${searchTerm}"`}
+                  {statusFilter !== 'all' && ` with status "${statusFilter}"`}
+                </span>
+                <div className="flex items-center gap-2">
+                  <span>Sort by:</span>
+                  <Select value={sortField} onValueChange={handleSortChange}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="createdAt">Created Date</SelectItem>
+                      <SelectItem value="firstName">First Name</SelectItem>
+                      <SelectItem value="lastName">Last Name</SelectItem>
+                      <SelectItem value="login">Email</SelectItem>
+                      <SelectItem value="kycStatus">KYC Status</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleSortChange(sortField)}
+                    className="px-2"
+                  >
+                    {sortOrder === SortOrder.ASC ? '↑' : '↓'}
+                  </Button>
+                </div>
+              </div>
+              
+              {users.map((user) => (
               <div key={user.id} className="flex items-center justify-between p-4 border border-neutral-200 rounded-lg">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
@@ -176,9 +295,71 @@ export function UsersPage() {
                 </div>
               </div>
             ))}
-              {filteredUsers.length === 0 && (
+              {users.length === 0 && (
                 <div className="text-center py-8">
                   <p className="text-neutral-500">No users found</p>
+                </div>
+              )}
+              
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between pt-4 border-t">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(1)}
+                      disabled={!hasPrevious}
+                    >
+                      First
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={!hasPrevious}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Previous
+                    </Button>
+                    <span className="text-sm text-gray-600">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={!hasNext}
+                    >
+                      Next
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(totalPages)}
+                      disabled={!hasNext}
+                    >
+                      Last
+                    </Button>
+                  </div>
+                  
+                  {/* Page size selector */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">Show:</span>
+                    <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+                      <SelectTrigger className="w-20">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="10">10</SelectItem>
+                        <SelectItem value="20">20</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
+                        <SelectItem value="100">100</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <span className="text-sm text-gray-600">per page</span>
+                  </div>
                 </div>
               )}
             </div>

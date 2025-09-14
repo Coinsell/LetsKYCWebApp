@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Card,
   CardContent,
@@ -14,12 +14,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { CountryKycAssignment, useKYCAdmin } from "@/contexts/KYCAdminContext";
+import { Input } from "@/components/ui/input";
+import { CountryKycAssignment, useKYCAdmin, PaginatedResponse, PaginationParams, FilterCondition, FilterOperator, SortCondition, SortOrder } from "@/contexts/KYCAdminContext";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { countryApi } from "@/lib/countryapi";
 import { countryKycAssignmentApi } from "@/lib/countrykycassignmentapi";
 import { kycLevelsApi } from "@/lib/kyclevelsapi";
-import { Pencil, Trash2, Plus } from "lucide-react";
+import { Pencil, Trash2, Plus, ChevronLeft, ChevronRight, Search } from "lucide-react";
 
 // --- View model for rows ---
 export interface CountryKycAssignmentView extends CountryKycAssignment {
@@ -169,31 +170,128 @@ function AssignmentRowNew({
 // --- Main page ---
 export function KYCCountryAssignmentsPage() {
   const { state, dispatch } = useKYCAdmin();
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+  const [hasNext, setHasNext] = useState(false);
+  const [hasPrevious, setHasPrevious] = useState(false);
+  
+  // Filter and search state
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeFilter, setActiveFilter] = useState<string>('all');
+  const [sortField, setSortField] = useState('countryCode');
+  const [sortOrder, setSortOrder] = useState<SortOrder>(SortOrder.ASC);
+  
+  // Loading state
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
+  
+  // Assignments data
+  const [assignments, setAssignments] = useState<CountryKycAssignment[]>([]);
 
   useEffect(() => {
     loadData();
   }, []);
 
+  useEffect(() => {
+    loadAssignments();
+  }, [currentPage, pageSize, searchTerm, activeFilter, sortField, sortOrder]);
+
   const loadData = async () => {
     setLoading(true);
     try {
-      const [countriesRes, assignmentsRes, kycLevelsRes] = await Promise.all([
+      const [countriesRes, kycLevelsRes] = await Promise.all([
         countryApi.list(),
-        countryKycAssignmentApi.listAll(),
         kycLevelsApi.list(),
       ]);
-      console.log("Loaded data:", countriesRes, assignmentsRes, kycLevelsRes);
+      console.log("Loaded data:", countriesRes, kycLevelsRes);
       dispatch({ type: "SET_COUNTRIES", payload: countriesRes });
-      dispatch({ type: "SET_ASSIGNMENTS", payload: assignmentsRes });
       dispatch({ type: "SET_KYC_LEVELS", payload: kycLevelsRes });
     } catch (err) {
       console.error("Failed to load data", err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadAssignments = useCallback(async () => {
+    setLoading(true);
+    try {
+      // Build pagination parameters
+      const paginationParams: PaginationParams = {
+        page: currentPage,
+        page_size: pageSize,
+        fetch_all: false,
+        search: searchTerm || undefined,
+        sort_by: [
+          {
+            field: sortField,
+            order: sortOrder
+          }
+        ]
+      }
+
+      // Add active filter if not 'all'
+      if (activeFilter !== 'all') {
+        paginationParams.filters = [
+          {
+            field: 'isActive',
+            operator: FilterOperator.EQUALS,
+            value: activeFilter === 'active'
+          }
+        ]
+      }
+
+      const response: PaginatedResponse<CountryKycAssignment> = await countryKycAssignmentApi.listEnhanced(paginationParams);
+      
+      setAssignments(response.items);
+      setTotalPages(response.total_pages);
+      setTotalCount(response.total_count);
+      setHasNext(response.has_next);
+      setHasPrevious(response.has_previous);
+      
+    } catch (error) {
+      console.error('Error fetching assignments:', error);
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to fetch assignments' });
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, pageSize, searchTerm, activeFilter, sortField, sortOrder, dispatch]);
+
+  // Pagination handlers
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (newPageSize: string) => {
+    setPageSize(Number(newPageSize));
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1); // Reset to first page when searching
+  };
+
+  const handleActiveFilterChange = (value: string) => {
+    setActiveFilter(value);
+    setCurrentPage(1); // Reset to first page when filtering
+  };
+
+  const handleSortChange = (field: string) => {
+    if (field === sortField) {
+      // Toggle sort order if same field
+      setSortOrder(sortOrder === SortOrder.ASC ? SortOrder.DESC : SortOrder.ASC);
+    } else {
+      // Set new field with default sort order
+      setSortField(field);
+      setSortOrder(SortOrder.ASC);
+    }
+    setCurrentPage(1); // Reset to first page when sorting
   };
 
   const handleAssign = async (countryCode: string, kycLevelId: string) => {
@@ -206,27 +304,8 @@ export function KYCCountryAssignmentsPage() {
         isActive: true,
       });
 
-      const existingAssignment = state.assignments.find(
-        (a) => a.countryCode === countryCode
-      );
-
-      if (existingAssignment) {
-        dispatch({
-          type: "UPDATE_ASSIGNMENT",
-          payload: { ...existingAssignment, kycLevelId },
-        });
-      } else {
-        dispatch({
-          type: "ADD_ASSIGNMENT",
-          payload: {
-            id: crypto.randomUUID(),
-            countryCode,
-            kycLevelId,
-            isActive: true,
-          },
-        });
-      }
-
+      // Refresh the current page after assignment
+      loadAssignments();
       setEditing(null);
     } catch (err) {
       console.error("Failed to assign KYC level", err);
@@ -247,7 +326,8 @@ export function KYCCountryAssignmentsPage() {
         assignment.id,
         assignment.countryCode
       );
-      dispatch({ type: "DELETE_ASSIGNMENT", payload: assignment.id });
+      // Refresh the current page after deletion
+      loadAssignments();
     } catch (err) {
       console.error("Failed to delete KYC assignment", err);
     } finally {
@@ -276,8 +356,7 @@ export function KYCCountryAssignmentsPage() {
   //   });
 
   // build enriched view directly from assignments
-  const countriesWithAssignments: CountryKycAssignmentView[] = state.assignments
-    // .filter((a) => a.isActive) // only show active ones
+  const countriesWithAssignments: CountryKycAssignmentView[] = assignments
     .map((assignment) => {
       const country = state.countries.find(
         (c) => c.code === assignment.countryCode
@@ -295,7 +374,7 @@ export function KYCCountryAssignmentsPage() {
 
   const unassignedCountries = state.countries.filter(
     (c) =>
-      !state.assignments.some((a) => a.countryCode === c.code && a.isActive)
+      !assignments.some((a) => a.countryCode === c.code && a.isActive)
   );
 
   function InlineSpinner() {
@@ -342,16 +421,82 @@ export function KYCCountryAssignmentsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Assignments</CardTitle>
-          <CardDescription>
-            By default you can view assignments. Click edit to change them.
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Assignments</CardTitle>
+              <CardDescription>
+                By default you can view assignments. Click edit to change them.
+              </CardDescription>
+            </div>
+            <div className="flex gap-4">
+              <Select value={activeFilter} onValueChange={handleActiveFilterChange}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Filter by Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Assignments</SelectItem>
+                  <SelectItem value="active">Active Only</SelectItem>
+                  <SelectItem value="inactive">Inactive Only</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Search assignments..."
+                  value={searchTerm}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  className="w-72 pl-10"
+                />
+              </div>
+              <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+                <SelectTrigger className="w-24">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
             <LoadingSpinner fullscreen={false} />
           ) : (
             <div className="space-y-4">
+              {/* Results summary */}
+              <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400 mb-4">
+                <span>
+                  Showing {countriesWithAssignments.length} of {totalCount} assignments
+                  {searchTerm && ` for "${searchTerm}"`}
+                  {activeFilter !== 'all' && ` with status "${activeFilter}"`}
+                </span>
+                <div className="flex items-center gap-2">
+                  <span>Sort by:</span>
+                  <Select value={sortField} onValueChange={handleSortChange}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="countryCode">Country Code</SelectItem>
+                      <SelectItem value="kycLevelId">KYC Level</SelectItem>
+                      <SelectItem value="isActive">Status</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleSortChange(sortField)}
+                    className="px-2"
+                  >
+                    {sortOrder === SortOrder.ASC ? '↑' : '↓'}
+                  </Button>
+                </div>
+              </div>
+
               {editing === "new" && (
                 <AssignmentRowNew
                   countries={unassignedCountries}
@@ -400,8 +545,70 @@ export function KYCCountryAssignmentsPage() {
               )}
 
               {countriesWithAssignments.length === 0 && (
-                <div className="text-center py-8 text-neutral-500">
-                  No countries found
+                <div className="text-center py-8 text-neutral-500 dark:text-neutral-400">
+                  No assignments found
+                </div>
+              )}
+              
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between pt-4 border-t border-neutral-200 dark:border-neutral-700">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(1)}
+                      disabled={!hasPrevious}
+                    >
+                      First
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={!hasPrevious}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Previous
+                    </Button>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={!hasNext}
+                    >
+                      Next
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(totalPages)}
+                      disabled={!hasNext}
+                    >
+                      Last
+                    </Button>
+                  </div>
+                  
+                  {/* Page size selector */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Show:</span>
+                    <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+                      <SelectTrigger className="w-20">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="10">10</SelectItem>
+                        <SelectItem value="20">20</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
+                        <SelectItem value="100">100</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">per page</span>
+                  </div>
                 </div>
               )}
             </div>

@@ -8,10 +8,11 @@ import { CheckCircle, Shield, Upload, ExternalLink, AlertCircle } from 'lucide-r
 
 interface AadhaarStepProps {
   onNext: () => void
-  onBack: () => void
+  onBack?: () => void
+  buttonText?: string
 }
 
-export function AadhaarStep({ onNext, onBack }: AadhaarStepProps) {
+export function AadhaarStep({ onNext, onBack, buttonText = "Continue" }: AadhaarStepProps) {
   const { state, dispatch } = useKYC()
   const [activeTab, setActiveTab] = useState<'instructions' | 'upload'>('instructions')
   const [shareCode, setShareCode] = useState('')
@@ -132,11 +133,13 @@ export function AadhaarStep({ onNext, onBack }: AadhaarStepProps) {
           </div>
 
           <div className="flex justify-between">
-            <Button variant="outline" onClick={onBack}>
-              Back
-            </Button>
-            <Button onClick={onNext}>
-              Continue
+            {onBack && (
+              <Button variant="outline" onClick={onBack}>
+                Back
+              </Button>
+            )}
+            <Button onClick={onNext} className={!onBack ? "ml-auto" : ""}>
+              {buttonText}
             </Button>
           </div>
         </CardContent>
@@ -294,9 +297,11 @@ export function AadhaarStep({ onNext, onBack }: AadhaarStepProps) {
         )}
 
         <div className="flex justify-between">
-          <Button variant="outline" onClick={onBack}>
-            Back
-          </Button>
+          {onBack && (
+            <Button variant="outline" onClick={onBack}>
+              Back
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

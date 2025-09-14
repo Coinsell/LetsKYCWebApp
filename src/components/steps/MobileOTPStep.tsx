@@ -8,10 +8,11 @@ import { CheckCircle, Smartphone } from 'lucide-react'
 
 interface MobileOTPStepProps {
   onNext: () => void
-  onBack: () => void
+  onBack?: () => void
+  buttonText?: string
 }
 
-export function MobileOTPStep({ onNext, onBack }: MobileOTPStepProps) {
+export function MobileOTPStep({ onNext, onBack, buttonText = "Continue" }: MobileOTPStepProps) {
   const { state, dispatch } = useKYC()
   const [otp, setOtp] = useState('')
   const [otpSent, setOtpSent] = useState(false)
@@ -111,11 +112,13 @@ export function MobileOTPStep({ onNext, onBack }: MobileOTPStepProps) {
         </CardHeader>
         <CardContent>
           <div className="flex justify-between">
-            <Button variant="outline" onClick={onBack}>
-              Back
-            </Button>
-            <Button onClick={onNext}>
-              Continue
+            {onBack && (
+              <Button variant="outline" onClick={onBack}>
+                Back
+              </Button>
+            )}
+            <Button onClick={onNext} className={!onBack ? "ml-auto" : ""}>
+              {buttonText}
             </Button>
           </div>
         </CardContent>
@@ -196,10 +199,12 @@ export function MobileOTPStep({ onNext, onBack }: MobileOTPStepProps) {
         )}
 
         <div className="flex justify-between pt-4">
-          <Button variant="outline" onClick={onBack}>
-            Back
-          </Button>
-          <Button variant="link" onClick={onBack}>
+          {onBack && (
+            <Button variant="outline" onClick={onBack}>
+              Back
+            </Button>
+          )}
+          <Button variant="link" onClick={onBack || (() => {})}>
             Change Mobile Number
           </Button>
         </div>

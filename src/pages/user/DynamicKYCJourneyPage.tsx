@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useParams, useSearchParams } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -7,7 +8,9 @@ import {
   CardTitle,
 } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
+import { Button } from "../../components/ui/button";
 import { Progress } from "../../components/ui/progress";
+import { LoadingSpinner } from "../../components/ui/loading-spinner";
 import { CheckCircle, Clock, AlertCircle } from "lucide-react";
 import { getKycStatusDisplayText } from "../../utils/kycStatusConverter";
 
@@ -18,10 +21,19 @@ import {
   KYCDetail,
   KYCStatus,
   KycDetailType,
+  UserKYCLevel,
+  UserKYCDetail,
+  FilterOperator,
 } from "../../contexts/KYCAdminContext";
+
+// APIs
+import { userKycLevelsApi } from "../../lib/userkyclevelsapi";
+import { userKycDetailsApi } from "../../lib/userkycdetailsapi";
+import { userApi } from "../../lib/userapi";
 
 // Step Components
 import { AadhaarStep } from "../../components/steps/AadhaarStep";
+import { AddressStep } from "../../components/steps/AddressStep";
 import { LivenessStep } from "../../components/steps/LivenessStep";
 import { MobileOTPStep } from "../../components/steps/MobileOTPStep";
 import { PANVerificationStep } from "../../components/steps/PANVerificationStep";
@@ -33,24 +45,170 @@ import { KYCProvider } from "../../contexts/KYCContext";
 export function DynamicKYCJourneyPage() {
   const { user } = useAuth();
   const { state } = useKYCAdmin();
-  const [userKycLevel, setUserKycLevel] = useState<any>(null);
-  const [kycSteps, setKycSteps] = useState<KYCDetail[]>([]);
+  const { userId: urlUserId } = useParams<{ userId: string }>();
+  const [searchParams] = useSearchParams();
+  const levelId = searchParams.get('level');
+  
+  // Debug URL parameters
+  console.log('URL Debug Info:', {
+    urlUserId,
+    levelId,
+    searchParams: Object.fromEntries(searchParams.entries()),
+    currentPath: window.location.pathname,
+    currentSearch: window.location.search
+  });
+  
+  // Determine if this is a public access (no authentication required)
+  const isPublicAccess = !!urlUserId && !!levelId;
+  const currentUserId = isPublicAccess ? urlUserId : user?.id;
+  
+  console.log('Access Debug Info:', {
+    isPublicAccess,
+    currentUserId,
+    user: user?.id
+  });
+  
+  const [userKycLevel, setUserKycLevel] = useState<UserKYCLevel | null>(null);
+  const [kycSteps, setKycSteps] = useState<(KYCDetail | UserKYCDetail)[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [userInfo, setUserInfo] = useState<any>(null);
 
   useEffect(() => {
+    if (isPublicAccess || user) {
     fetchUserKYCData();
-  }, [user]);
+    }
+  }, [user, urlUserId, levelId]);
 
   const fetchUserKYCData = async () => {
     try {
-      const mockUserKycLevel = {
+      setLoading(true);
+      setError(null);
+      
+      console.log('fetchUserKYCData called with:', {
+        currentUserId,
+        levelId,
+        isPublicAccess,
+        urlUserId
+      });
+      
+      if (!currentUserId) {
+        console.error('No currentUserId available');
+        setError("User ID not available");
+        return;
+      }
+
+      console.log('Fetching KYC data for user:', currentUserId, 'level:', levelId);
+      
+      // For public access, fetch real data from API
+      if (isPublicAccess && levelId) {
+        // First, fetch user information
+        try {
+          const userData = await userApi.get(currentUserId);
+          setUserInfo(userData);
+          console.log('User data fetched:', userData);
+        } catch (userError) {
+          console.error('Error fetching user data:', userError);
+          // Continue without user info
+        }
+
+        // Get the user's KYC level record
+        let userKycLevelRecord: UserKYCLevel | null = null;
+        try {
+          const userKycLevels = await userKycLevelsApi.listByUserId(currentUserId);
+          console.log('All user KYC levels:', userKycLevels);
+          
+          // Find the record where userKycLevelId matches the levelId from URL
+          userKycLevelRecord = userKycLevels.find(level => level.userKycLevelId === levelId) || null;
+          console.log('User KYC level found in list:', userKycLevelRecord);
+          
+          if (!userKycLevelRecord) {
+            // If not found by userKycLevelId, try the old field name for backward compatibility
+            userKycLevelRecord = userKycLevels.find(level => (level as any).kycLevelId === levelId) || null;
+            console.log('User KYC level found with old field name:', userKycLevelRecord);
+          }
+        } catch (listError) {
+          console.error('Error fetching user KYC levels:', listError);
+          throw new Error("Failed to fetch user KYC level");
+        }
+
+        if (!userKycLevelRecord) {
+          setError("User KYC level not found for this user and level combination");
+          return;
+        }
+
+        setUserKycLevel(userKycLevelRecord);
+
+        // Now fetch the user's KYC details for this specific level
+        try {
+          console.log('Fetching KYC details for user:', currentUserId, 'and level:', levelId);
+          
+          // Use POST method with proper filtering to get only the records we need
+          const kycDetailsResponse = await userKycDetailsApi.listEnhanced({
+            page: 1,
+            page_size: 100,
+            fetch_all: true,
+            filters: [
+              {
+                field: "userId",
+                operator: FilterOperator.EQUALS,
+                value: currentUserId
+              },
+              {
+                field: "userKycLevelId", 
+                operator: FilterOperator.EQUALS,
+                value: levelId
+              }
+            ]
+          });
+          
+          console.log('KYC details response:', kycDetailsResponse);
+          console.log('Response items:', kycDetailsResponse.items);
+          console.log('Response items length:', kycDetailsResponse.items?.length);
+          
+          const userKycDetails = kycDetailsResponse.items || [];
+          console.log('User KYC details loaded:', userKycDetails);
+          console.log('Number of steps found:', userKycDetails.length);
+          
+          if (userKycDetails.length === 0) {
+            console.log('No KYC details found for this user and level');
+            setError("No KYC steps found for this journey");
+            return;
+          }
+          
+          setKycSteps(userKycDetails);
+          
+          // Initialize completed steps - only mark as completed if status is 1 in database
+          // For now, we'll start with no completed steps and let the user progress through them
+          const completedStepIds = userKycDetails
+            .filter(detail => (detail as any).status === 1) // 1 means completed
+            .map(detail => detail.userKycDetailId); // Use userKycDetailId as the step identifier
+          console.log('Completed step IDs from database:', completedStepIds);
+          
+          // For demo purposes, let's start with no completed steps so user can go through the journey
+          setCompletedSteps([]);
+          
+        } catch (detailsError) {
+          console.error('Error fetching user KYC details:', detailsError);
+          setError("Failed to load KYC journey steps");
+        }
+      } else {
+        // For authenticated access, use mock data (existing behavior)
+        const mockUserKycLevel: UserKYCLevel = {
         id: "1",
-        userId: user?.id,
-        kycLevelId: "kyc-level-1",
+          userId: user?.id || "",
+          userKycLevelId: "kyc-level-1",
         code: "BASIC",
         description: "Basic KYC Level",
         status: KYCStatus.InProgress,
+          maxDepositAmount: 0,
+          maxWithdrawalAmount: 0,
+          duration: 0,
+          timeUnit: 0 as any,
+          docType: "UserKycLevel",
+          lastUpdated: new Date().toISOString(),
       };
 
       const mockKycSteps: KYCDetail[] = [
@@ -108,24 +266,43 @@ export function DynamicKYCJourneyPage() {
 
       setUserKycLevel(mockUserKycLevel);
       setKycSteps(mockKycSteps.sort((a, b) => a.sequence - b.sequence));
+      }
     } catch (error) {
       console.error("Failed to fetch KYC data:", error);
+      setError("Failed to load KYC journey");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleStepComplete = (stepId: string) => {
-    console.log("User Info Step Completed");
+    console.log("Step Completed:", stepId);
     setCompletedSteps((prev) => [...prev, stepId]);
-    const nextStepIndex = kycSteps.findIndex((step) => step.id === stepId) + 1;
+    
+    // Find the next step index - handle both KYCDetail and UserKYCDetail formats
+    const nextStepIndex = kycSteps.findIndex((step: KYCDetail | UserKYCDetail) => {
+      if ('userKycDetailId' in step) {
+        return step.userKycDetailId === stepId;
+      } else {
+        return step.id === stepId;
+      }
+    }) + 1;
+    
     if (nextStepIndex < kycSteps.length) {
       setCurrentStep(nextStepIndex);
+    } else {
+      // This was the last step - move to completion state
+      setCurrentStep(kycSteps.length);
     }
   };
 
-  const getStepStatus = (step: KYCDetail) => {
-    if (completedSteps.includes(step.id)) return "completed";
-    if (kycSteps.findIndex((s) => s.id === step.id) === currentStep)
-      return "current";
+  const getStepStatus = (step: KYCDetail | UserKYCDetail) => {
+    const stepId = 'userKycDetailId' in step ? step.userKycDetailId : step.id;
+    if (completedSteps.includes(stepId)) return "completed";
+    if (kycSteps.findIndex((s) => {
+      const sId = 'userKycDetailId' in s ? s.userKycDetailId : s.id;
+      return sId === stepId;
+    }) === currentStep) return "current";
     return "pending";
   };
 
@@ -151,15 +328,76 @@ export function DynamicKYCJourneyPage() {
     }
   };
 
-  const renderStepComponent = (step: KYCDetail) => {
-    const props = { onComplete: () => handleStepComplete(step.id) };
-    switch (step.type) {
+  const renderStepComponent = (step: KYCDetail | UserKYCDetail, stepIndex: number) => {
+    const stepId = 'userKycDetailId' in step ? step.userKycDetailId : step.id;
+    const stepType = (step as any).type;
+    
+    // Map UserKYCDetail type to KycDetailType if needed
+    let mappedType = stepType;
+    if (typeof stepType === 'number') {
+      switch (stepType) {
+        case 0:
+          mappedType = KycDetailType.general;
+          break;
+        case 1:
+          mappedType = KycDetailType.phoneNo;
+          break;
+        case 2:
+          mappedType = KycDetailType.address;
+          break;
+        case 3:
+          mappedType = KycDetailType.addressProof;
+          break;
+        case 4:
+          mappedType = KycDetailType.selfie;
+          break;
+        case 5:
+          mappedType = KycDetailType.identityProof;
+          break;
+        case 6:
+          mappedType = KycDetailType.occupation;
+          break;
+        case 7:
+          mappedType = KycDetailType.pepDeclaration;
+          break;
+        case 8:
+          mappedType = KycDetailType.userInfo;
+          break;
+        case 9:
+          mappedType = KycDetailType.aadhaar;
+          break;
+        case 10:
+          mappedType = KycDetailType.pan;
+          break;
+        case 11:
+          mappedType = KycDetailType.liveliness;
+          break;
+        default:
+          mappedType = KycDetailType.general;
+      }
+    }
+    
+    const props = { onComplete: () => handleStepComplete(stepId) };
+    const isFirstStep = stepIndex === 0;
+    const isLastStep = stepIndex === kycSteps.length - 1;
+    
+    // Debug logging
+    console.log('Step rendering debug:', {
+      stepIndex,
+      totalSteps: kycSteps.length,
+      isLastStep,
+      stepType: mappedType,
+      stepId
+    });
+    
+    switch (mappedType) {
       case KycDetailType.userInfo:
         return (
           <UserInfoStep
             onNext={() => {
-              handleStepComplete(step.id);
+              handleStepComplete(stepId);
             }}
+            buttonText={isLastStep ? "Complete" : "Save & Continue"}
             {...props}
           />
         );
@@ -167,9 +405,21 @@ export function DynamicKYCJourneyPage() {
         return (
           <MobileOTPStep
             onNext={() => {
-              handleStepComplete(step.id);
+              handleStepComplete(stepId);
             }}
-            onBack={() => {}}
+            onBack={isFirstStep ? undefined : () => setCurrentStep(prev => Math.max(prev - 1, 0))}
+            buttonText={isLastStep ? "Complete" : "Continue"}
+            {...props}
+          />
+        );
+      case KycDetailType.address:
+        return (
+          <AddressStep
+            onNext={() => {
+              handleStepComplete(stepId);
+            }}
+            onBack={isFirstStep ? undefined : () => setCurrentStep(prev => Math.max(prev - 1, 0))}
+            buttonText={isLastStep ? "Complete" : "Continue"}
             {...props}
           />
         );
@@ -177,9 +427,10 @@ export function DynamicKYCJourneyPage() {
         return (
           <AadhaarStep
             onNext={() => {
-              handleStepComplete(step.id);
+              handleStepComplete(stepId);
             }}
-            onBack={() => {}}
+            onBack={isFirstStep ? undefined : () => setCurrentStep(prev => Math.max(prev - 1, 0))}
+            buttonText={isLastStep ? "Complete" : "Continue"}
             {...props}
           />
         );
@@ -187,9 +438,10 @@ export function DynamicKYCJourneyPage() {
         return (
           <PANVerificationStep
             onNext={() => {
-              handleStepComplete(step.id);
+              handleStepComplete(stepId);
             }}
-            onBack={() => {}}
+            onBack={isFirstStep ? undefined : () => setCurrentStep(prev => Math.max(prev - 1, 0))}
+            buttonText={isLastStep ? "Complete" : "Continue"}
             {...props}
           />
         );
@@ -197,14 +449,26 @@ export function DynamicKYCJourneyPage() {
         return (
           <LivenessStep
             onNext={() => {
-              handleStepComplete(step.id);
+              handleStepComplete(stepId);
             }}
-            onBack={() => {}}
+            onBack={isFirstStep ? undefined : () => setCurrentStep(prev => Math.max(prev - 1, 0))}
+            buttonText={isLastStep ? "Complete" : "Continue to Review"}
             {...props}
           />
         );
       default:
-        return null;
+        return (
+          <Card>
+            <CardContent className="p-6">
+              <p>Unknown step type: {stepType}</p>
+              <p>Step: {step.step || step.description}</p>
+              <p>Mapped Type: {mappedType}</p>
+              <Button onClick={() => handleStepComplete(stepId)}>
+                Mark as Complete
+              </Button>
+            </CardContent>
+          </Card>
+        );
     }
   };
 
@@ -248,18 +512,81 @@ export function DynamicKYCJourneyPage() {
   //   }
   // };
 
-  const progressPercentage = (completedSteps.length / kycSteps.length) * 100;
+  const progressPercentage = kycSteps.length > 0 ? (completedSteps.length / kycSteps.length) * 100 : 0;
+  
+  // Debug logging
+  console.log('Current state:', {
+    kycStepsLength: kycSteps.length,
+    completedStepsLength: completedSteps.length,
+    progressPercentage,
+    currentStep,
+    isPublicAccess,
+    levelId,
+    urlUserId
+  });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-6">
+            <div className="text-center">
+              <LoadingSpinner fullscreen={false} />
+              <p className="mt-4">Loading KYC journey...</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-6">
+            <div className="text-center">
+              <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-4" />
+              <p className="text-red-600">{error}</p>
+              {isPublicAccess && (
+                <p className="text-sm text-neutral-500 mt-2">
+                  User ID: {urlUserId}, Level ID: {levelId}
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
-          Your KYC Journey
-        </h1>
-        <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
-          Complete your KYC verification process step by step
-        </p>
-      </div>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="space-y-6">
+          {/* Header with User Info */}
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-neutral-900 dark:text-neutral-100">
+              KYC Verification Journey
+            </h1>
+            <p className="mt-2 text-lg text-neutral-600 dark:text-neutral-400">
+              Complete your KYC verification process step by step
+            </p>
+            {isPublicAccess && userInfo && (
+              <div className="mt-4 p-4 bg-primary-1/5 dark:bg-primary-1/10 rounded-lg border border-primary-1/20">
+                <div className="flex items-center justify-center gap-4">
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-primary-1">
+                      Welcome, {userInfo.firstName} {userInfo.lastName}
+                    </p>
+                    <p className="text-xs text-neutral-600 dark:text-neutral-400">
+                      {userInfo.login}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
 
       {userKycLevel && (
         <Card>
@@ -367,7 +694,7 @@ export function DynamicKYCJourneyPage() {
                       {index === currentStep && (
                         <KYCProvider>
                           <div className="p-4 border rounded-lg bg-neutral-50 dark:bg-neutral-800">
-                            {renderStepComponent(step)}
+                            {renderStepComponent(step, index)}
                           </div>
                         </KYCProvider>
                       )}
@@ -384,8 +711,8 @@ export function DynamicKYCJourneyPage() {
                 </KYCProvider>
               )} */}
 
-              {/* Final Completion Message */}
-              {completedSteps.length === kycSteps.length && (
+              {/* Final Completion Message - Only show when all steps are completed */}
+              {completedSteps.length === kycSteps.length && kycSteps.length > 0 && currentStep >= kycSteps.length && (
                 <div className="text-center p-6 bg-green-50 dark:bg-green-900/20 rounded-lg">
                   <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-green-700 dark:text-green-400">
@@ -401,6 +728,8 @@ export function DynamicKYCJourneyPage() {
           </CardContent>
         </Card>
       )}
+        </div>
+      </div>
     </div>
   );
 }

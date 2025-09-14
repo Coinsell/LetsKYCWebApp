@@ -7,10 +7,11 @@ import { CheckCircle, Camera, RefreshCw, AlertCircle } from 'lucide-react'
 
 interface LivenessStepProps {
   onNext: () => void
-  onBack: () => void
+  onBack?: () => void
+  buttonText?: string
 }
 
-export function LivenessStep({ onNext, onBack }: LivenessStepProps) {
+export function LivenessStep({ onNext, onBack, buttonText = "Continue to Review" }: LivenessStepProps) {
   const { state, dispatch } = useKYC()
   const [cameraActive, setCameraActive] = useState(false)
   const [capturedImage, setCapturedImage] = useState<string | null>(null)
@@ -165,11 +166,13 @@ export function LivenessStep({ onNext, onBack }: LivenessStepProps) {
           )}
 
           <div className="flex justify-between">
-            <Button variant="outline" onClick={onBack}>
-              Back
-            </Button>
-            <Button onClick={onNext}>
-              Continue to Review
+            {onBack && (
+              <Button variant="outline" onClick={onBack}>
+                Back
+              </Button>
+            )}
+            <Button onClick={onNext} className={!onBack ? "ml-auto" : ""}>
+              {buttonText}
             </Button>
           </div>
         </CardContent>
@@ -280,10 +283,12 @@ export function LivenessStep({ onNext, onBack }: LivenessStepProps) {
         </div>
 
         <div className="flex justify-between">
-          <Button variant="outline" onClick={onBack}>
-            Back
-          </Button>
-          <Button variant="ghost" onClick={skipLiveness}>
+          {onBack && (
+            <Button variant="outline" onClick={onBack}>
+              Back
+            </Button>
+          )}
+          <Button variant="ghost" onClick={skipLiveness} className={!onBack ? "ml-auto" : ""}>
             Skip This Step
           </Button>
         </div>

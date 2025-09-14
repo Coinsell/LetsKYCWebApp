@@ -17,9 +17,10 @@ import { User } from "@/contexts/KYCAdminContext";
 
 interface UserInfoStepProps {
   onNext: () => void;
+  buttonText?: string;
 }
 
-export function UserInfoStep({ onNext }: UserInfoStepProps) {
+export function UserInfoStep({ onNext, buttonText = "Continue" }: UserInfoStepProps) {
   const { dispatch } = useKYC();
   const { user: authUser } = useAuth();
   const [formData, setFormData] = useState<UserInfo>({
@@ -278,7 +279,7 @@ export function UserInfoStep({ onNext }: UserInfoStepProps) {
 
           <div className="flex justify-end pt-4">
             <Button type="submit" size="lg">
-              Save & Continue
+              {buttonText}
             </Button>
           </div>
         </form>

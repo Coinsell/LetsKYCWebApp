@@ -7,10 +7,11 @@ import { CheckCircle, FileText, AlertTriangle } from 'lucide-react'
 
 interface PANVerificationStepProps {
   onNext: () => void
-  onBack: () => void
+  onBack?: () => void
+  buttonText?: string
 }
 
-export function PANVerificationStep({ onNext, onBack }: PANVerificationStepProps) {
+export function PANVerificationStep({ onNext, onBack, buttonText = "Continue" }: PANVerificationStepProps) {
   const { state, dispatch } = useKYC()
   const [loading, setLoading] = useState(false)
   const [panData, setPanData] = useState<any>(null)
@@ -138,11 +139,13 @@ export function PANVerificationStep({ onNext, onBack }: PANVerificationStepProps
           )}
 
           <div className="flex justify-between">
-            <Button variant="outline" onClick={onBack}>
-              Back
-            </Button>
-            <Button onClick={onNext}>
-              Continue
+            {onBack && (
+              <Button variant="outline" onClick={onBack}>
+                Back
+              </Button>
+            )}
+            <Button onClick={onNext} className={!onBack ? "ml-auto" : ""}>
+              {buttonText}
             </Button>
           </div>
         </CardContent>
@@ -197,9 +200,11 @@ export function PANVerificationStep({ onNext, onBack }: PANVerificationStepProps
         </div>
 
         <div className="flex justify-between">
-          <Button variant="outline" onClick={onBack}>
-            Back
-          </Button>
+          {onBack && (
+            <Button variant="outline" onClick={onBack}>
+              Back
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

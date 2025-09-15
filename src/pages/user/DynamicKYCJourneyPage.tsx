@@ -75,6 +75,7 @@ export function DynamicKYCJourneyPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userInfo, setUserInfo] = useState<any>(null);
+  const [kycSubmitted, setKycSubmitted] = useState(false);
 
   useEffect(() => {
     if (isPublicAccess || user) {
@@ -178,11 +179,14 @@ export function DynamicKYCJourneyPage() {
             return;
           }
           
-          setKycSteps(userKycDetails);
+          // Sort steps by sequence to ensure correct order
+          const sortedSteps = userKycDetails.sort((a, b) => a.sequence - b.sequence);
+          console.log('Sorted steps by sequence:', sortedSteps);
+          setKycSteps(sortedSteps);
           
           // Initialize completed steps - only mark as completed if status is 1 in database
-          // For now, we'll start with no completed steps and let the user progress through them
-          const completedStepIds = userKycDetails
+          // For now, we'll start with no completed steps so user can go through the journey
+          const completedStepIds = sortedSteps
             .filter(detail => (detail as any).status === 1) // 1 means completed
             .map(detail => detail.userKycDetailId); // Use userKycDetailId as the step identifier
           console.log('Completed step IDs from database:', completedStepIds);
@@ -291,13 +295,17 @@ export function DynamicKYCJourneyPage() {
     if (nextStepIndex < kycSteps.length) {
       setCurrentStep(nextStepIndex);
     } else {
-      // This was the last step - move to completion state
+      // This was the last step - mark as submitted and move to completion state
+      console.log('Last step completed - KYC journey submitted!');
+      setKycSubmitted(true);
       setCurrentStep(kycSteps.length);
     }
   };
 
   const getStepStatus = (step: KYCDetail | UserKYCDetail) => {
     const stepId = 'userKycDetailId' in step ? step.userKycDetailId : step.id;
+    // If KYC is submitted, all steps are completed
+    if (kycSubmitted) return "completed";
     if (completedSteps.includes(stepId)) return "completed";
     if (kycSteps.findIndex((s) => {
       const sId = 'userKycDetailId' in s ? s.userKycDetailId : s.id;
@@ -335,6 +343,7 @@ export function DynamicKYCJourneyPage() {
     // Map UserKYCDetail type to KycDetailType if needed
     let mappedType = stepType;
     if (typeof stepType === 'number') {
+      console.log('Mapping step type:', { stepType, stepId });
       switch (stepType) {
         case 0:
           mappedType = KycDetailType.general;
@@ -375,6 +384,7 @@ export function DynamicKYCJourneyPage() {
         default:
           mappedType = KycDetailType.general;
       }
+      console.log('Mapped type result:', { stepType, mappedType });
     }
     
     const props = { onComplete: () => handleStepComplete(stepId) };
@@ -387,7 +397,10 @@ export function DynamicKYCJourneyPage() {
       totalSteps: kycSteps.length,
       isLastStep,
       stepType: mappedType,
-      stepId
+      stepId,
+      buttonText: isLastStep ? "Complete" : "Continue",
+      stepSequence: (step as any).sequence,
+      stepName: step.step
     });
     
     switch (mappedType) {
@@ -512,7 +525,7 @@ export function DynamicKYCJourneyPage() {
   //   }
   // };
 
-  const progressPercentage = kycSteps.length > 0 ? (completedSteps.length / kycSteps.length) * 100 : 0;
+  const progressPercentage = kycSubmitted ? 100 : (kycSteps.length > 0 ? (completedSteps.length / kycSteps.length) * 100 : 0);
   
   // Debug logging
   console.log('Current state:', {
@@ -522,7 +535,8 @@ export function DynamicKYCJourneyPage() {
     currentStep,
     isPublicAccess,
     levelId,
-    urlUserId
+    urlUserId,
+    stepSequences: kycSteps.map(step => ({ sequence: step.sequence, step: step.step, type: (step as any).type }))
   });
 
   if (loading) {
@@ -616,7 +630,7 @@ export function DynamicKYCJourneyPage() {
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium">Progress</span>
                   <span className="text-sm text-neutral-600">
-                    {completedSteps.length} of {kycSteps.length} completed
+                    {kycSubmitted ? `${kycSteps.length} of ${kycSteps.length} completed` : `${completedSteps.length} of ${kycSteps.length} completed`}
                   </span>
                 </div>
                 <Progress value={progressPercentage} className="h-2" />
@@ -661,8 +675,9 @@ export function DynamicKYCJourneyPage() {
               <div className="space-y-3">
                 {kycSteps.map((step, index) => {
                   const status = getStepStatus(step);
+                  const stepId = 'userKycDetailId' in step ? step.userKycDetailId : step.id;
                   return (
-                    <div key={step.id} className="space-y-2">
+                    <div key={stepId} className="space-y-2">
                       {/* Step Header */}
                       <div
                         className={`flex items-center justify-between p-4 rounded-lg border ${
@@ -690,11 +705,21 @@ export function DynamicKYCJourneyPage() {
                         </div>
                       </div>
 
-                      {/* ✅ Render component right after the active step */}
-                      {index === currentStep && (
+                      {/* ✅ Render component right after the active step - hide when KYC is submitted */}
+                      {!kycSubmitted && (index === currentStep || (currentStep >= kycSteps.length && index === kycSteps.length - 1 && completedSteps.length < kycSteps.length)) && (
                         <KYCProvider>
                           <div className="p-4 border rounded-lg bg-neutral-50 dark:bg-neutral-800">
-                            {renderStepComponent(step, index)}
+                            {(() => {
+                              console.log('Rendering step component:', {
+                                index,
+                                currentStep,
+                                isLastStep: index === kycSteps.length - 1,
+                                stepType: (step as any).type,
+                                stepId,
+                                allStepsCompleted: completedSteps.length === kycSteps.length
+                              });
+                              return renderStepComponent(step, index);
+                            })()}
                           </div>
                         </KYCProvider>
                       )}
@@ -711,17 +736,33 @@ export function DynamicKYCJourneyPage() {
                 </KYCProvider>
               )} */}
 
-              {/* Final Completion Message - Only show when all steps are completed */}
-              {completedSteps.length === kycSteps.length && kycSteps.length > 0 && currentStep >= kycSteps.length && (
-                <div className="text-center p-6 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                  <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-green-700 dark:text-green-400">
-                    KYC Journey Complete!
+              {/* Final Completion Message - Show when KYC is submitted */}
+              {kycSubmitted && (
+                <div className="text-center p-6 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                  <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+                  <h3 className="text-2xl font-bold text-green-700 dark:text-green-400 mb-2">
+                    KYC Submitted Successfully!
                   </h3>
-                  <p className="text-sm text-green-600 dark:text-green-500 mt-2">
-                    Your KYC verification is now under review. You'll be
-                    notified once approved.
+                  <p className="text-lg text-green-600 dark:text-green-500 mb-4">
+                    Your KYC verification has been submitted and is now under review.
                   </p>
+                  <div className="bg-white dark:bg-neutral-800 p-4 rounded-lg border border-green-200 dark:border-green-700">
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                      <strong>What happens next?</strong>
+                    </p>
+                    <ul className="text-sm text-neutral-600 dark:text-neutral-400 mt-2 space-y-1">
+                      <li>• Our compliance team will review your documents</li>
+                      <li>• You'll receive an email notification once approved</li>
+                      <li>• The process typically takes 1-2 business days</li>
+                    </ul>
+                  </div>
+                  {isPublicAccess && (
+                    <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
+                      <p className="text-sm text-blue-600 dark:text-blue-400">
+                        <strong>Note:</strong> This is a public KYC journey. You can close this page now.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

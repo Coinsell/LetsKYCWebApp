@@ -14,6 +14,7 @@ interface AddressStepProps {
 }
 
 export function AddressStep({ onNext, onBack, onComplete, buttonText = "Continue" }: AddressStepProps) {
+  console.log('AddressStep props:', { onNext: !!onNext, onBack: !!onBack, onComplete: !!onComplete, buttonText });
   const [formData, setFormData] = useState({
     addressLine1: "",
     addressLine2: "",

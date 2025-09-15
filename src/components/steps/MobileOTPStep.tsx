@@ -13,16 +13,20 @@ interface MobileOTPStepProps {
 }
 
 export function MobileOTPStep({ onNext, onBack, buttonText = "Continue" }: MobileOTPStepProps) {
+  console.log('MobileOTPStep props:', { onNext: !!onNext, onBack: !!onBack, buttonText });
   const { state, dispatch } = useKYC()
   const [otp, setOtp] = useState('')
   const [otpSent, setOtpSent] = useState(false)
   const [countdown, setCountdown] = useState(0)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [mobileVerified, setMobileVerified] = useState(false)
 
-  const maskedMobile = state.userInfo?.mobile 
-    ? `+91-XXXXXX${state.userInfo.mobile.slice(-4)}`
-    : ''
+  // Get mobile number from KYC context or use a default for demo
+  const mobileNumber = state.userInfo?.mobile || '+91-9876543210'
+  const maskedMobile = mobileNumber 
+    ? `+91-XXXXXX${mobileNumber.slice(-4)}`
+    : '+91-XXXXXX3210'
 
   useEffect(() => {
     if (countdown > 0) {
@@ -36,25 +40,18 @@ export function MobileOTPStep({ onNext, onBack, buttonText = "Continue" }: Mobil
     setError('')
     
     try {
-      const response = await fetch('/api/otp/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          mobile: state.userInfo?.mobile,
-          kycId: state.kycId
-        })
-      })
+      // For demo purposes, simulate OTP sending
+      console.log('Sending OTP to:', mobileNumber)
       
-      if (response.ok) {
-        setOtpSent(true)
-        setCountdown(60)
-      } else {
-        setError('Failed to send OTP. Please try again.')
-      }
-    } catch (error) {
-      // For demo purposes, simulate success
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
       setOtpSent(true)
       setCountdown(60)
+      console.log('OTP sent successfully (demo)')
+    } catch (error) {
+      console.error('Error sending OTP:', error)
+      setError('Failed to send OTP. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -70,35 +67,29 @@ export function MobileOTPStep({ onNext, onBack, buttonText = "Continue" }: Mobil
     setError('')
 
     try {
-      const response = await fetch('/api/otp/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          kycId: state.kycId,
-          code: otp
-        })
-      })
+      // For demo purposes, accept any 6-digit OTP or "123456"
+      console.log('Verifying OTP:', otp)
       
-      if (response.ok) {
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      if (otp === '123456' || otp.length === 6) {
+        setMobileVerified(true)
         dispatch({ type: 'SET_MOBILE_VERIFIED', payload: true })
-        onNext()
+        console.log('OTP verified successfully (demo)')
+        // Don't call onNext() immediately, let user see the success state
       } else {
         setError('Invalid OTP. Please try again.')
       }
     } catch (error) {
-      // For demo purposes, simulate success if OTP is "123456"
-      if (otp === '123456') {
-        dispatch({ type: 'SET_MOBILE_VERIFIED', payload: true })
-        onNext()
-      } else {
-        setError('Invalid OTP. Please try again. (Use 123456 for demo)')
-      }
+      console.error('Error verifying OTP:', error)
+      setError('Failed to verify OTP. Please try again.')
     } finally {
       setLoading(false)
     }
   }
 
-  if (state.mobileVerified) {
+  if (mobileVerified || state.mobileVerified) {
     return (
       <Card>
         <CardHeader>
@@ -117,7 +108,10 @@ export function MobileOTPStep({ onNext, onBack, buttonText = "Continue" }: Mobil
                 Back
               </Button>
             )}
-            <Button onClick={onNext} className={!onBack ? "ml-auto" : ""}>
+            <Button onClick={() => {
+              console.log('Mobile verification completed, proceeding to next step');
+              onNext();
+            }} className={!onBack ? "ml-auto" : ""}>
               {buttonText}
             </Button>
           </div>
@@ -163,16 +157,18 @@ export function MobileOTPStep({ onNext, onBack, buttonText = "Continue" }: Mobil
               <Input
                 value={otp}
                 onChange={(e) => {
-                  setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 6)
+                  setOtp(value)
                   setError('')
                 }}
-                placeholder="123456"
+                placeholder="Enter 6-digit OTP"
                 maxLength={6}
                 className="text-center text-lg tracking-widest"
+                disabled={loading}
               />
               {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
               <p className="text-xs text-neutral-500 mt-1">
-                For demo purposes, use OTP: 123456
+                For demo purposes, use any 6-digit number (e.g., 123456)
               </p>
             </div>
 
@@ -204,7 +200,12 @@ export function MobileOTPStep({ onNext, onBack, buttonText = "Continue" }: Mobil
               Back
             </Button>
           )}
-          <Button variant="link" onClick={onBack || (() => {})}>
+          <Button variant="link" onClick={() => {
+            setOtpSent(false)
+            setOtp('')
+            setError('')
+            setMobileVerified(false)
+          }}>
             Change Mobile Number
           </Button>
         </div>

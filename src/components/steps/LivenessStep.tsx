@@ -12,6 +12,7 @@ interface LivenessStepProps {
 }
 
 export function LivenessStep({ onNext, onBack, buttonText = "Continue to Review" }: LivenessStepProps) {
+  console.log('LivenessStep props:', { onNext: !!onNext, onBack: !!onBack, buttonText });
   const { state, dispatch } = useKYC()
   const [cameraActive, setCameraActive] = useState(false)
   const [capturedImage, setCapturedImage] = useState<string | null>(null)

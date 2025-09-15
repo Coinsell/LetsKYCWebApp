@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -11,7 +11,7 @@ import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import { Progress } from "../../components/ui/progress";
 import { LoadingSpinner } from "../../components/ui/loading-spinner";
-import { CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { CheckCircle, Clock, AlertCircle, Home, X } from "lucide-react";
 import { getKycStatusDisplayText } from "../../utils/kycStatusConverter";
 
 // Contexts
@@ -47,6 +47,7 @@ export function DynamicKYCJourneyPage() {
   const { state } = useKYCAdmin();
   const { userId: urlUserId } = useParams<{ userId: string }>();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const levelId = searchParams.get('level');
   
   // Debug URL parameters
@@ -577,15 +578,15 @@ export function DynamicKYCJourneyPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="space-y-6">
+    <div className="space-y-6">
           {/* Header with User Info */}
           <div className="text-center">
             <h1 className="text-3xl font-bold text-neutral-900 dark:text-neutral-100">
               KYC Verification Journey
-            </h1>
+        </h1>
             <p className="mt-2 text-lg text-neutral-600 dark:text-neutral-400">
-              Complete your KYC verification process step by step
-            </p>
+          Complete your KYC verification process step by step
+        </p>
             {isPublicAccess && userInfo && (
               <div className="mt-4 p-4 bg-primary-1/5 dark:bg-primary-1/10 rounded-lg border border-primary-1/20">
                 <div className="flex items-center justify-center gap-4">
@@ -600,7 +601,7 @@ export function DynamicKYCJourneyPage() {
                 </div>
               </div>
             )}
-          </div>
+      </div>
 
       {userKycLevel && (
         <Card>
@@ -759,10 +760,61 @@ export function DynamicKYCJourneyPage() {
                   {isPublicAccess && (
                     <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
                       <p className="text-sm text-blue-600 dark:text-blue-400">
-                        <strong>Note:</strong> This is a public KYC journey. You can close this page now.
+                        <strong>Note:</strong> This is a public KYC journey. You can return to the main website or close this page.
                       </p>
                     </div>
                   )}
+                  
+                  {/* Navigation Buttons */}
+                  <div className="flex flex-col sm:flex-row gap-3 mt-6 justify-center max-w-md mx-auto">
+                    <Button 
+                      onClick={() => {
+                        console.log('Navigating to home page');
+                        navigate('/');
+                      }}
+                      className="flex items-center gap-2"
+                      size="lg"
+                    >
+                      <Home className="h-4 w-4" />
+                      Go to Home
+                    </Button>
+                    
+                    {isPublicAccess && (
+                      <Button 
+                        onClick={() => {
+                          console.log('Closing KYC journey page - navigating to coinsell.com');
+                          // Try to close the window, fallback to external website if not possible
+                          if (window.opener) {
+                            window.close();
+                          } else {
+                            // If window.close() doesn't work, redirect to external website
+                            window.location.href = 'https://www.coinsell.com';
+                          }
+                        }}
+                        variant="outline"
+                        className="flex items-center gap-2"
+                        size="lg"
+                      >
+                        <X className="h-4 w-4" />
+                        Return to Website
+                      </Button>
+                    )}
+                    
+                    {!isPublicAccess && (
+                      <Button 
+                        onClick={() => {
+                          console.log('Navigating to dashboard');
+                          navigate('/dashboard');
+                        }}
+                        variant="outline"
+                        className="flex items-center gap-2"
+                        size="lg"
+                      >
+                        <Home className="h-4 w-4" />
+                        Go to Dashboard
+                      </Button>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

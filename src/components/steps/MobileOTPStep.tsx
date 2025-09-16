@@ -3,8 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Badge } from '../ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { useKYC } from '../../contexts/KYCContext'
-import { CheckCircle, Smartphone } from 'lucide-react'
+import { CheckCircle, Smartphone, Edit3 } from 'lucide-react'
 
 interface MobileOTPStepProps {
   onNext: () => void
@@ -21,12 +22,49 @@ export function MobileOTPStep({ onNext, onBack, buttonText = "Continue" }: Mobil
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [mobileVerified, setMobileVerified] = useState(false)
+  const [isEditingMobile, setIsEditingMobile] = useState(false)
+  const [countryCode, setCountryCode] = useState('+91')
+  const [mobileNumber, setMobileNumber] = useState('')
 
-  // Get mobile number from KYC context or use a default for demo
-  const mobileNumber = state.userInfo?.mobile || '+91-9876543210'
+  // Initialize mobile number from KYC context or use empty for user input
+  useEffect(() => {
+    if (state.userInfo?.mobile) {
+      const mobile = state.userInfo.mobile
+      // Extract country code and number if mobile has country code
+      if (mobile.startsWith('+')) {
+        const match = mobile.match(/^(\+\d{1,3})(\d+)$/)
+        if (match) {
+          setCountryCode(match[1])
+          setMobileNumber(match[2])
+        } else {
+          setCountryCode('+91')
+          setMobileNumber(mobile)
+        }
+      } else {
+        setCountryCode('+91')
+        setMobileNumber(mobile)
+      }
+    }
+  }, [state.userInfo?.mobile])
+
+  const fullMobileNumber = `${countryCode}${mobileNumber}`
   const maskedMobile = mobileNumber 
-    ? `+91-XXXXXX${mobileNumber.slice(-4)}`
-    : '+91-XXXXXX3210'
+    ? `${countryCode}-XXXXXX${mobileNumber.slice(-4)}`
+    : `${countryCode}-XXXXXX`
+
+  // Common country codes
+  const countryCodes = [
+    { code: '+91', country: 'India', flag: '🇮🇳' },
+    { code: '+1', country: 'USA/Canada', flag: '🇺🇸' },
+    { code: '+44', country: 'UK', flag: '🇬🇧' },
+    { code: '+61', country: 'Australia', flag: '🇦🇺' },
+    { code: '+49', country: 'Germany', flag: '🇩🇪' },
+    { code: '+33', country: 'France', flag: '🇫🇷' },
+    { code: '+81', country: 'Japan', flag: '🇯🇵' },
+    { code: '+86', country: 'China', flag: '🇨🇳' },
+    { code: '+971', country: 'UAE', flag: '🇦🇪' },
+    { code: '+65', country: 'Singapore', flag: '🇸🇬' },
+  ]
 
   useEffect(() => {
     if (countdown > 0) {
@@ -36,18 +74,24 @@ export function MobileOTPStep({ onNext, onBack, buttonText = "Continue" }: Mobil
   }, [countdown])
 
   const sendOTP = async () => {
+    if (!mobileNumber || mobileNumber.length < 10) {
+      setError('Please enter a valid mobile number')
+      return
+    }
+
     setLoading(true)
     setError('')
     
     try {
       // For demo purposes, simulate OTP sending
-      console.log('Sending OTP to:', mobileNumber)
+      console.log('Sending OTP to:', fullMobileNumber)
       
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1000))
       
       setOtpSent(true)
       setCountdown(60)
+      setIsEditingMobile(false)
       console.log('OTP sent successfully (demo)')
     } catch (error) {
       console.error('Error sending OTP:', error)
@@ -132,21 +176,81 @@ export function MobileOTPStep({ onNext, onBack, buttonText = "Continue" }: Mobil
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="bg-secondary-2 p-4 rounded-lg border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-neutral-800">Mobile Number</p>
-              <p className="text-neutral-600">{maskedMobile}</p>
+        {/* Mobile Number Input or Display */}
+        {!isEditingMobile && mobileNumber ? (
+          <div className="bg-secondary-2 p-4 rounded-lg border">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-neutral-800">Mobile Number</p>
+                <p className="text-neutral-600">{maskedMobile}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline">Unverified</Badge>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsEditingMobile(true)}
+                  className="flex items-center gap-1"
+                >
+                  <Edit3 className="h-3 w-3" />
+                  Edit
+                </Button>
+              </div>
             </div>
-            <Badge variant="outline">Unverified</Badge>
           </div>
-        </div>
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
+                Mobile Number
+              </label>
+              <div className="flex gap-2">
+                <Select value={countryCode} onValueChange={setCountryCode}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {countryCodes.map((country) => (
+                      <SelectItem key={country.code} value={country.code}>
+                        <span className="flex items-center gap-2">
+                          <span>{country.flag}</span>
+                          <span>{country.code}</span>
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  value={mobileNumber}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '')
+                    setMobileNumber(value)
+                    setError('')
+                  }}
+                  placeholder="Enter mobile number"
+                  className="flex-1"
+                  maxLength={15}
+                />
+              </div>
+              {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+            </div>
+          </div>
+        )}
 
         {!otpSent ? (
           <div className="text-center">
-            <Button onClick={sendOTP} disabled={loading} size="lg">
+            <Button 
+              onClick={sendOTP} 
+              disabled={loading || !mobileNumber || mobileNumber.length < 10} 
+              size="lg"
+            >
               {loading ? 'Sending...' : 'Send OTP'}
             </Button>
+            {!mobileNumber && (
+              <p className="text-sm text-neutral-500 mt-2">
+                Please enter your mobile number to continue
+              </p>
+            )}
           </div>
         ) : (
           <div className="space-y-4">
@@ -200,14 +304,20 @@ export function MobileOTPStep({ onNext, onBack, buttonText = "Continue" }: Mobil
               Back
             </Button>
           )}
-          <Button variant="link" onClick={() => {
-            setOtpSent(false)
-            setOtp('')
-            setError('')
-            setMobileVerified(false)
-          }}>
-            Change Mobile Number
-          </Button>
+          {otpSent && (
+            <Button 
+              variant="link" 
+              onClick={() => {
+                setOtpSent(false)
+                setOtp('')
+                setError('')
+                setMobileVerified(false)
+                setIsEditingMobile(true)
+              }}
+            >
+              Change Mobile Number
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

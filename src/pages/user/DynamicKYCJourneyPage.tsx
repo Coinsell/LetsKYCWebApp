@@ -282,7 +282,12 @@ export function DynamicKYCJourneyPage() {
 
   const handleStepComplete = (stepId: string) => {
     console.log("Step Completed:", stepId);
-    setCompletedSteps((prev) => [...prev, stepId]);
+    console.log("Current completed steps before:", completedSteps);
+    setCompletedSteps((prev) => {
+      const newCompleted = [...prev, stepId];
+      console.log("New completed steps:", newCompleted);
+      return newCompleted;
+    });
     
     // Find the next step index - handle both KYCDetail and UserKYCDetail formats
     const nextStepIndex = kycSteps.findIndex((step: KYCDetail | UserKYCDetail) => {
@@ -293,11 +298,15 @@ export function DynamicKYCJourneyPage() {
       }
     }) + 1;
     
+    console.log("Next step index:", nextStepIndex, "Total steps:", kycSteps.length);
+    
     if (nextStepIndex < kycSteps.length) {
+      console.log("Moving to next step:", nextStepIndex);
       setCurrentStep(nextStepIndex);
     } else {
       // This was the last step - mark as submitted and move to completion state
       console.log('Last step completed - KYC journey submitted!');
+      console.log('Setting kycSubmitted to true');
       setKycSubmitted(true);
       setCurrentStep(kycSteps.length);
     }
@@ -537,6 +546,7 @@ export function DynamicKYCJourneyPage() {
     isPublicAccess,
     levelId,
     urlUserId,
+    kycSubmitted,
     stepSequences: kycSteps.map(step => ({ sequence: step.sequence, step: step.step, type: (step as any).type }))
   });
 
@@ -738,7 +748,10 @@ export function DynamicKYCJourneyPage() {
               )} */}
 
               {/* Final Completion Message - Show when KYC is submitted */}
-              {kycSubmitted && (
+              {(() => {
+                console.log('Checking KYC submitted component render:', { kycSubmitted, currentStep, kycStepsLength: kycSteps.length });
+                return kycSubmitted;
+              })() && (
                 <div className="text-center p-6 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
                   <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
                   <h3 className="text-2xl font-bold text-green-700 dark:text-green-400 mb-2">

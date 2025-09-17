@@ -335,32 +335,33 @@ const ProvinceDetailsPage: React.FC<Props> = ({ mode }) => {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-3 sm:p-6 space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 sm:mb-6">
         {/* Left side: Back button */}
         <button
           onClick={handleBack}
-          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100"
+          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 w-full sm:w-auto justify-center sm:justify-start"
         >
           <ArrowLeft className="w-4 h-4" />
           Back
         </button>
 
         {/* Right side: Actions */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 w-full sm:w-auto">
           <button
             onClick={handleDeleteProvince}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 flex-1 sm:flex-none justify-center sm:justify-start"
           >
             <Trash2 className="w-4 h-4" />
-            Delete Province
+            <span className="hidden sm:inline">Delete Province</span>
+            <span className="sm:hidden">Delete</span>
           </button>
           <button
             onClick={() => window.location.reload()}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-100"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-100 flex-1 sm:flex-none justify-center sm:justify-start"
           >
             <RefreshCw className="w-4 h-4" />
-            Refresh
+            <span className="hidden sm:inline">Refresh</span>
           </button>
         </div>
       </div>
@@ -369,10 +370,10 @@ const ProvinceDetailsPage: React.FC<Props> = ({ mode }) => {
       <div className="bg-white shadow rounded-2xl p-6 space-y-3">
         {editingProvince ? (
           <>
-            <h2 className="text-2xl font-bold">
+            <h2 className="text-xl sm:text-2xl font-bold">
               {isNewRoute ? "Create Province" : "Edit Province"}
             </h2>
-            <div className="grid grid-cols-2 gap-4 pt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
               <div>
                 <label className="block text-sm text-gray-600">Code</label>
                 <input
@@ -479,7 +480,7 @@ const ProvinceDetailsPage: React.FC<Props> = ({ mode }) => {
               {!isNewRoute && (
                 <button
                   onClick={() => setEditingProvince(null)}
-                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100"
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 w-full sm:w-auto justify-center sm:justify-start"
                 >
                   <X className="w-4 h-4" />
                   Cancel
@@ -487,10 +488,11 @@ const ProvinceDetailsPage: React.FC<Props> = ({ mode }) => {
               )}
               <button
                 onClick={handleSaveProvince}
-                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700"
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 w-full sm:w-auto justify-center sm:justify-start"
               >
                 <Save className="w-4 h-4" />
-                Save Province
+                <span className="hidden sm:inline">Save Province</span>
+                <span className="sm:hidden">Save</span>
               </button>
             </div>
           </>
@@ -535,11 +537,11 @@ const ProvinceDetailsPage: React.FC<Props> = ({ mode }) => {
       {/* --- Cities List --- */}
       {!isNewRoute && (
         <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-xl font-semibold">Cities</h3>
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+            <h3 className="text-lg sm:text-xl font-semibold">Cities</h3>
             <div className="flex gap-2">
               <button
-                className="flex items-center gap-2 bg-green-600 text-white px-3 py-2 rounded-lg shadow hover:bg-green-700 text-sm"
+                className="flex items-center gap-2 bg-green-600 text-white px-3 py-2 rounded-lg shadow hover:bg-green-700 text-sm w-full sm:w-auto justify-center sm:justify-start"
                 onClick={handleAddCityClick}
               >
                 <Plus className="h-4 w-4" />
@@ -549,8 +551,8 @@ const ProvinceDetailsPage: React.FC<Props> = ({ mode }) => {
           </div>
 
           {/* Search and Filter Controls */}
-          <div className="flex flex-wrap gap-4 items-center">
-            <div className="relative w-72">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-stretch sm:items-center">
+            <div className="relative flex-1 min-w-0 sm:w-72">
               <Input
                 placeholder="Search cities..."
                 value={searchTerm}
@@ -559,40 +561,41 @@ const ProvinceDetailsPage: React.FC<Props> = ({ mode }) => {
               />
             </div>
 
-            <Select value={restrictionFilter} onValueChange={handleRestrictionFilterChange}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Registration Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Cities</SelectItem>
-                <SelectItem value="restricted">Restricted</SelectItem>
-                <SelectItem value="unrestricted">Unrestricted</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex flex-wrap gap-3 sm:gap-4 items-center">
+              <Select value={restrictionFilter} onValueChange={handleRestrictionFilterChange}>
+                <SelectTrigger className="w-full sm:w-48">
+                  <SelectValue placeholder="Registration Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Cities</SelectItem>
+                  <SelectItem value="restricted">Restricted</SelectItem>
+                  <SelectItem value="unrestricted">Unrestricted</SelectItem>
+                </SelectContent>
+              </Select>
 
-            <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
-              <SelectTrigger className="w-24">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="20">20</SelectItem>
-                <SelectItem value="50">50</SelectItem>
-                <SelectItem value="100">100</SelectItem>
-              </SelectContent>
-            </Select>
+              <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+                <SelectTrigger className="w-20 sm:w-24">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
 
-            <Select value={sortField} onValueChange={handleSortChange}>
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="sequence">Sequence</SelectItem>
-                <SelectItem value="code">Code</SelectItem>
-                <SelectItem value="name">Name</SelectItem>
-                <SelectItem value="cityType">Type</SelectItem>
-              </SelectContent>
-            </Select>
+              <Select value={sortField} onValueChange={handleSortChange}>
+                <SelectTrigger className="w-28 sm:w-32">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sequence">Sequence</SelectItem>
+                  <SelectItem value="code">Code</SelectItem>
+                  <SelectItem value="name">Name</SelectItem>
+                  <SelectItem value="cityType">Type</SelectItem>
+                </SelectContent>
+              </Select>
 
             <Button
               variant="outline"
@@ -914,6 +917,7 @@ const ProvinceDetailsPage: React.FC<Props> = ({ mode }) => {
               </div>
             </div>
           )}
+        </div>
         </div>
       )}
     </div>

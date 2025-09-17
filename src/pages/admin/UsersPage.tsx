@@ -172,36 +172,38 @@ export function UsersPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <CardTitle>Users</CardTitle>
               <CardDescription>Manage user accounts and their KYC journey</CardDescription>
             </div>
-            <div className="flex gap-4">
-              <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Filter by Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  {Object.values(KYCStatus).map((status) => (
-                    <SelectItem key={status} value={status}>
-                      {status}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search users..."
-                  value={searchTerm}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                  className="w-72 pl-10"
-                />
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-1">
+                <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
+                  <SelectTrigger className="w-full sm:w-48">
+                    <SelectValue placeholder="Filter by Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    {Object.values(KYCStatus).map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {status}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="relative flex-1 min-w-0">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Search users..."
+                    value={searchTerm}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    className="w-full pl-10"
+                  />
+                </div>
               </div>
               <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
-                <SelectTrigger className="w-24">
+                <SelectTrigger className="w-full sm:w-24">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -220,16 +222,16 @@ export function UsersPage() {
           ) : (
             <div className="space-y-4">
               {/* Results summary */}
-              <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400 mb-4">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center text-sm text-gray-600 dark:text-gray-400 mb-4 gap-3">
                 <span>
                   Showing {users.length} of {totalCount} users
                   {searchTerm && ` for "${searchTerm}"`}
                   {statusFilter !== 'all' && ` with status "${statusFilter}"`}
                 </span>
                 <div className="flex items-center gap-2">
-                  <span>Sort by:</span>
+                  <span className="hidden sm:inline">Sort by:</span>
                   <Select value={sortField} onValueChange={handleSortChange}>
-                    <SelectTrigger className="w-32">
+                    <SelectTrigger className="w-full sm:w-32">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -244,7 +246,7 @@ export function UsersPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => handleSortChange(sortField)}
-                    className="px-2"
+                    className="px-2 flex items-center justify-center"
                   >
                     {sortOrder === SortOrder.ASC ? '↑' : '↓'}
                   </Button>
@@ -252,56 +254,62 @@ export function UsersPage() {
               </div>
               
               {users.map((user) => (
-              <div key={user.id} className="flex items-center justify-between p-4 border border-neutral-200 dark:border-neutral-700 rounded-lg">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="font-semibold text-lg">
+              <div key={user.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border border-neutral-200 dark:border-neutral-700 rounded-lg gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                    <h3 className="font-semibold text-lg truncate">
                       {user.firstName} {user.lastName}
                     </h3>
                     <span
-                      className={`px-3 py-1 rounded-full text-sm font-medium ${getKycStatusColor(user.kycStatus)}`}
+                      className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap self-start sm:self-auto ${getKycStatusColor(user.kycStatus)}`}
                     >
                       {getKycStatusDisplayText(user.kycStatus)}
                     </span>
                   </div>
-                  <p className="text-neutral-600 dark:text-neutral-400 mb-2">{user.login}</p>
-                  <div className="flex gap-4 text-sm text-neutral-500">
-                    <span>DOB: {formatDate(user.dateOfBirth)}</span>
-                    <span>Country: {user.country}</span>
-                    <span>Joined: {formatDate(user.createdAt)}</span>
+                  <p className="text-neutral-600 dark:text-neutral-400 mb-2 text-sm sm:text-base break-all">{user.login}</p>
+                  <div className="flex flex-col sm:flex-row sm:gap-4 gap-1 text-sm text-neutral-500">
+                    <span className="truncate">DOB: {formatDate(user.dateOfBirth)}</span>
+                    <span className="truncate">Country: {user.country}</span>
+                    <span className="truncate">Joined: {formatDate(user.createdAt)}</span>
                   </div>
                   {user.contacts.phoneNumbers.length > 0 && (
-                    <div className="text-sm text-neutral-500 mt-1">
+                    <div className="text-sm text-neutral-500 mt-1 truncate">
                       Phone: {user.contacts.phoneNumbers[0].countryCode} {user.contacts.phoneNumbers[0].phone}
                     </div>
                   )}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2 sm:flex-nowrap">
                   <Button
                     variant="outline" 
                     size="sm"
                     onClick={() => handleManageKYC(user.id)}
                     title="Manage KYC Levels & Details"
+                    className="flex items-center gap-2 min-w-0"
                   >
-                    <FileText className="h-4 w-4" />
+                    <FileText className="h-4 w-4 flex-shrink-0" />
+                    <span className="hidden sm:inline">KYC</span>
                   </Button>
-                  <Button variant="outline" size="sm" asChild>
+                  <Button variant="outline" size="sm" asChild className="flex items-center gap-2 min-w-0">
                     <Link to={`/admin/users/${user.id}`}>
-                      <Eye className="h-4 w-4" />
+                      <Eye className="h-4 w-4 flex-shrink-0" />
+                      <span className="hidden sm:inline">View</span>
                     </Link>
                   </Button>                  
                   {(user.kycStatus === KYCStatus.Submitted || user.kycStatus === KYCStatus.UnderReview) && (
-                    <Button variant="outline" size="sm" asChild title="KYC Review">
+                    <Button variant="outline" size="sm" asChild title="KYC Review" className="flex items-center gap-2 min-w-0">
                       <Link to={`/admin/users/${user.id}/kyc-review`}>
-                        <FileText className="h-4 w-4" />
+                        <FileText className="h-4 w-4 flex-shrink-0" />
+                        <span className="hidden sm:inline">Review</span>
                       </Link>
                     </Button>
                   )}
-                  <Button variant="outline" size="sm">
-                    <Pencil className="h-4 w-4" />
+                  <Button variant="outline" size="sm" className="flex items-center gap-2 min-w-0">
+                    <Pencil className="h-4 w-4 flex-shrink-0" />
+                    <span className="hidden sm:inline">Edit</span>
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleDelete(user.id)}>
-                    <Trash2 className="h-4 w-4" />
+                  <Button variant="outline" size="sm" onClick={() => handleDelete(user.id)} className="flex items-center gap-2 min-w-0">
+                    <Trash2 className="h-4 w-4 flex-shrink-0" />
+                    <span className="hidden sm:inline">Delete</span>
                   </Button>
                 </div>
               </div>
@@ -314,13 +322,14 @@ export function UsersPage() {
               
               {/* Pagination Controls */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between pt-4 border-t border-neutral-200 dark:border-neutral-700">
-                  <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-center justify-between pt-4 border-t border-neutral-200 dark:border-neutral-700 gap-4">
+                  <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handlePageChange(1)}
                       disabled={!hasPrevious}
+                      className="hidden sm:flex"
                     >
                       First
                     </Button>
@@ -329,11 +338,12 @@ export function UsersPage() {
                       size="sm"
                       onClick={() => handlePageChange(currentPage - 1)}
                       disabled={!hasPrevious}
+                      className="flex items-center gap-2"
                     >
                       <ChevronLeft className="h-4 w-4" />
-                      Previous
+                      <span className="hidden sm:inline">Previous</span>
                     </Button>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                    <span className="text-sm text-gray-600 dark:text-gray-400 px-2">
                       Page {currentPage} of {totalPages}
                     </span>
                     <Button
@@ -341,8 +351,9 @@ export function UsersPage() {
                       size="sm"
                       onClick={() => handlePageChange(currentPage + 1)}
                       disabled={!hasNext}
+                      className="flex items-center gap-2"
                     >
-                      Next
+                      <span className="hidden sm:inline">Next</span>
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                     <Button
@@ -350,6 +361,7 @@ export function UsersPage() {
                       size="sm"
                       onClick={() => handlePageChange(totalPages)}
                       disabled={!hasNext}
+                      className="hidden sm:flex"
                     >
                       Last
                     </Button>

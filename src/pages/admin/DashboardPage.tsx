@@ -45,15 +45,15 @@ export function DashboardPage() {
   }, {} as Record<KYCStatus, number>)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Dashboard</h1>
-        <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+        <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-neutral-100">Dashboard</h1>
+        <p className="mt-1 sm:mt-2 text-sm text-neutral-600 dark:text-neutral-400">
           Overview of KYC administration system
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
           <Card key={stat.name}>
             <CardContent className="p-6">
@@ -71,7 +71,7 @@ export function DashboardPage() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>KYC Status Distribution</CardTitle>

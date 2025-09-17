@@ -206,27 +206,27 @@ export function ProfessionsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <Button
             variant="outline"
             onClick={handleBackToOccupations}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 w-full sm:w-auto"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Occupations
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
+            <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-neutral-100">
               Professions
             </h1>
-            <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+            <p className="mt-1 sm:mt-2 text-sm text-neutral-600 dark:text-neutral-400">
               Manage professions and their configurations
             </p>
           </div>
         </div>
-        <Button onClick={handleCreate} className="gap-2">
+        <Button onClick={handleCreate} className="gap-2 w-full sm:w-auto">
           <Plus className="h-4 w-4" />
           Add Profession
         </Button>
@@ -245,9 +245,9 @@ export function ProfessionsPage() {
             </div>
             
             {/* Search and Filter Controls */}
-            <div className="flex flex-wrap gap-4 items-center">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-stretch sm:items-center">
               {/* Search */}
-              <div className="relative w-72">
+              <div className="relative flex-1 min-w-0 sm:w-72">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   placeholder="Search professions..."
@@ -257,65 +257,68 @@ export function ProfessionsPage() {
                 />
               </div>
 
-              {/* Occupation Filter */}
-              <Select value={occupationFilter} onValueChange={handleOccupationFilterChange}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Occupation" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Occupations</SelectItem>
-                  {/* Add occupation options dynamically */}
-                </SelectContent>
-              </Select>
+              {/* Filters Row */}
+              <div className="flex flex-wrap gap-3 sm:gap-4 items-center">
+                {/* Occupation Filter */}
+                <Select value={occupationFilter} onValueChange={handleOccupationFilterChange}>
+                  <SelectTrigger className="w-full sm:w-48">
+                    <SelectValue placeholder="Occupation" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Occupations</SelectItem>
+                    {/* Add occupation options dynamically */}
+                  </SelectContent>
+                </Select>
 
-              {/* Status Filter */}
-              <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
+                {/* Status Filter */}
+                <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
+                  <SelectTrigger className="w-full sm:w-48">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
 
-              {/* Page Size */}
-              <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
-                <SelectTrigger className="w-24">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="20">20</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                  <SelectItem value="100">100</SelectItem>
-                </SelectContent>
-              </Select>
+                {/* Page Size */}
+                <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+                  <SelectTrigger className="w-20 sm:w-24">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
 
-              {/* Sort Field */}
-              <Select value={sortField} onValueChange={handleSortChange}>
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="sequence">Sequence</SelectItem>
-                  <SelectItem value="code">Code</SelectItem>
-                  <SelectItem value="name">Name</SelectItem>
-                  <SelectItem value="occupationCode">Occupation</SelectItem>
-                  <SelectItem value="jobLevel">Job Level</SelectItem>
-                </SelectContent>
-              </Select>
+                {/* Sort Field */}
+                <Select value={sortField} onValueChange={handleSortChange}>
+                  <SelectTrigger className="w-28 sm:w-32">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="sequence">Sequence</SelectItem>
+                    <SelectItem value="code">Code</SelectItem>
+                    <SelectItem value="name">Name</SelectItem>
+                    <SelectItem value="occupationCode">Occupation</SelectItem>
+                    <SelectItem value="jobLevel">Job Level</SelectItem>
+                  </SelectContent>
+                </Select>
 
-              {/* Sort Order Toggle */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={toggleSortOrder}
-                className="flex items-center gap-2"
-              >
-                {sortOrder === SortOrder.ASC ? '↑' : '↓'} {sortOrder}
-              </Button>
+                {/* Sort Order Toggle */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={toggleSortOrder}
+                  className="flex items-center gap-2 w-full sm:w-auto"
+                >
+                  {sortOrder === SortOrder.ASC ? '↑' : '↓'} {sortOrder}
+                </Button>
+              </div>
             </div>
 
             {/* Results Summary */}
@@ -366,40 +369,42 @@ export function ProfessionsPage() {
                 {professions.map((profession) => (
                 <div
                   key={profession.id}
-                  className="flex items-center justify-between p-4 border border-neutral-200 dark:border-neutral-700 rounded-lg"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border border-neutral-200 dark:border-neutral-700 rounded-lg gap-4"
                 >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-semibold text-lg">{profession.name}</h3>
-                      <Badge variant="outline" className="text-sm">
-                        {profession.code}
-                      </Badge>
-                      {profession.occupationName && (
-                        <Badge variant="secondary" className="text-sm">
-                          {profession.occupationName}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                      <h3 className="font-semibold text-lg truncate">{profession.name}</h3>
+                      <div className="flex flex-wrap gap-2">
+                        <Badge variant="outline" className="text-sm">
+                          {profession.code}
                         </Badge>
-                      )}
-                      {profession.jobLevel && (
-                        <Badge variant="secondary" className="text-sm">
-                          {profession.jobLevel}
-                        </Badge>
-                      )}
-                      <span
-                        className={`px-3 py-1 rounded-full text-sm font-medium ${
-                          profession.isActive 
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
-                            : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                        }`}
-                      >
-                        {profession.isActive ? 'Active' : 'Inactive'}
-                      </span>
+                        {profession.occupationName && (
+                          <Badge variant="secondary" className="text-sm">
+                            {profession.occupationName}
+                          </Badge>
+                        )}
+                        {profession.jobLevel && (
+                          <Badge variant="secondary" className="text-sm">
+                            {profession.jobLevel}
+                          </Badge>
+                        )}
+                        <span
+                          className={`px-3 py-1 rounded-full text-sm font-medium ${
+                            profession.isActive 
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                              : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                          }`}
+                        >
+                          {profession.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
                     </div>
                     {profession.jobTitle && (
-                      <p className="text-neutral-600 dark:text-neutral-400 mb-2">
+                      <p className="text-neutral-600 dark:text-neutral-400 mb-2 text-sm sm:text-base">
                         {profession.jobTitle}
                       </p>
                     )}
-                    <div className="flex gap-4 text-sm text-neutral-500">
+                    <div className="flex flex-col sm:flex-row sm:gap-4 gap-1 text-sm text-neutral-500">
                       <span>
                         <strong>Sequence:</strong> {profession.sequence}
                       </span>
@@ -418,20 +423,24 @@ export function ProfessionsPage() {
                       )}
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 justify-end sm:justify-start">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleEdit(profession)}
+                      className="flex-1 sm:flex-none"
                     >
-                      <Pencil className="h-4 w-4" />
+                      <Pencil className="h-4 w-4 sm:mr-2" />
+                      <span className="sm:hidden">Edit</span>
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleDelete(profession.code)}
+                      className="flex-1 sm:flex-none"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4 sm:mr-2" />
+                      <span className="sm:hidden">Delete</span>
                     </Button>
                   </div>
                 </div>
@@ -445,13 +454,14 @@ export function ProfessionsPage() {
 
               {/* Pagination Controls */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-6 pt-4 border-t border-neutral-200 dark:border-neutral-700">
-                  <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-center justify-between mt-6 pt-4 border-t border-neutral-200 dark:border-neutral-700 gap-4">
+                  <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handlePageChange(1)}
                       disabled={!hasPrevious}
+                      className="hidden sm:flex"
                     >
                       First
                     </Button>
@@ -462,7 +472,7 @@ export function ProfessionsPage() {
                       disabled={!hasPrevious}
                     >
                       <ChevronLeft className="h-4 w-4" />
-                      Previous
+                      <span className="hidden sm:inline ml-1">Previous</span>
                     </Button>
                     <Button
                       variant="outline"
@@ -470,7 +480,7 @@ export function ProfessionsPage() {
                       onClick={() => handlePageChange(currentPage + 1)}
                       disabled={!hasNext}
                     >
-                      Next
+                      <span className="hidden sm:inline mr-1">Next</span>
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                     <Button
@@ -478,12 +488,13 @@ export function ProfessionsPage() {
                       size="sm"
                       onClick={() => handlePageChange(totalPages)}
                       disabled={!hasNext}
+                      className="hidden sm:flex"
                     >
                       Last
                     </Button>
                   </div>
                   
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                  <div className="text-sm text-gray-600 dark:text-gray-400 text-center sm:text-right">
                     Page {currentPage} of {totalPages}
                   </div>
                 </div>

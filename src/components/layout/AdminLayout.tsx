@@ -43,7 +43,7 @@ export function AdminLayout() {
       {/* Main content */}
       <div
         className={`flex-1 transition-all duration-300 ${
-          sidebarCollapsed ? "lg:pl-16" : "lg:pl-64"
+          sidebarCollapsed ? "lg:pl-16" : "lg:pl-72"
         }`}
       >
         <AdminHeader onOpenSidebar={() => setSidebarOpen(true)} />

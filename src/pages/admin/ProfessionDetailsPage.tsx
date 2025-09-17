@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { OccupationProfession, DocumentType } from "../../contexts/KYCAdminContext";
+import { OccupationProfession } from "../../contexts/KYCAdminContext";
 import { useParams, useNavigate } from "react-router-dom";
 import { occupationProfessionApi } from "../../lib/occupationprofessionapi";
 import {
@@ -37,7 +37,7 @@ const ProfessionDetailsPage: React.FC<Props> = ({ mode }) => {
         if (isNewRoute) {
           const emptyProfession: OccupationProfession = {
             id: "",
-            docType: DocumentType.PROFESSION,
+            docType: "Profession",
             code: "",
             name: "",
             sequence: 0,

@@ -52,9 +52,9 @@ export function UserKYCDetailsPage() {
   // Data state
   const [userKycDetails, setUserKycDetails] = useState<UserKYCDetail[]>([]);
 
-  useEffect(() => {
-    fetchUserKycDetails();
-  }, []);
+  // useEffect(() => {
+  //   fetchUserKycDetails();
+  // }, []);
 
   useEffect(() => {
     loadDetailsWithPagination();

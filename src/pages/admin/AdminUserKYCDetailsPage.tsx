@@ -57,9 +57,9 @@ export function AdminUserKYCDetailsPage() {
   const [userKycDetails, setUserKycDetails] = useState<UserKYCDetail[]>([]);
   const [users, setUsers] = useState<User[]>([]);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  // useEffect(() => {
+  //   fetchData();
+  // }, []);
 
   useEffect(() => {
     loadDetailsWithPagination();

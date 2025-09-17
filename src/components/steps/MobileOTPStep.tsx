@@ -4,8 +4,11 @@ import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Badge } from '../ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
+import { LoadingSpinner } from '../ui/loading-spinner'
 import { useKYC } from '../../contexts/KYCContext'
 import { CheckCircle, Smartphone, Edit3 } from 'lucide-react'
+import { otpApi } from '../../lib/otpapi'
+import { isdCodeApi, ISDCode } from '../../lib/isdcodeapi'
 
 interface MobileOTPStepProps {
   onNext: () => void
@@ -25,6 +28,13 @@ export function MobileOTPStep({ onNext, onBack, buttonText = "Continue" }: Mobil
   const [isEditingMobile, setIsEditingMobile] = useState(false)
   const [countryCode, setCountryCode] = useState('+91')
   const [mobileNumber, setMobileNumber] = useState('')
+  const [isdCodes, setIsdCodes] = useState<ISDCode[]>([])
+  const [loadingIsdCodes, setLoadingIsdCodes] = useState(false)
+
+  // Load ISD codes on component mount
+  useEffect(() => {
+    loadIsdCodes()
+  }, [])
 
   // Initialize mobile number from KYC context or use empty for user input
   useEffect(() => {
@@ -47,24 +57,46 @@ export function MobileOTPStep({ onNext, onBack, buttonText = "Continue" }: Mobil
     }
   }, [state.userInfo?.mobile])
 
+  const loadIsdCodes = async () => {
+    try {
+      setLoadingIsdCodes(true)
+      const codes = await isdCodeApi.list()
+      setIsdCodes(codes)
+    } catch (error) {
+      console.error('Error loading ISD codes:', error)
+      // Fallback to common codes if API fails
+      setIsdCodes([
+        { sequence: 1, isdCode: 91, countryCode: 'IN', countryCode2: 'IND', countryName: 'India' },
+        { sequence: 2, isdCode: 1, countryCode: 'US', countryCode2: 'USA', countryName: 'United States' },
+        { sequence: 3, isdCode: 44, countryCode: 'GB', countryCode2: 'GBR', countryName: 'United Kingdom' },
+        { sequence: 4, isdCode: 49, countryCode: 'DE', countryCode2: 'DEU', countryName: 'Germany' },
+        { sequence: 5, isdCode: 33, countryCode: 'FR', countryCode2: 'FRA', countryName: 'France' },
+        { sequence: 6, isdCode: 86, countryCode: 'CN', countryCode2: 'CHN', countryName: 'China' },
+        { sequence: 7, isdCode: 81, countryCode: 'JP', countryCode2: 'JPN', countryName: 'Japan' },
+        { sequence: 8, isdCode: 61, countryCode: 'AU', countryCode2: 'AUS', countryName: 'Australia' },
+        { sequence: 9, isdCode: 55, countryCode: 'BR', countryCode2: 'BRA', countryName: 'Brazil' },
+        { sequence: 10, isdCode: 7, countryCode: 'RU', countryCode2: 'RUS', countryName: 'Russia' }
+      ])
+    } finally {
+      setLoadingIsdCodes(false)
+    }
+  }
+
   const fullMobileNumber = `${countryCode}${mobileNumber}`
   const maskedMobile = mobileNumber 
     ? `${countryCode}-XXXXXX${mobileNumber.slice(-4)}`
     : `${countryCode}-XXXXXX`
 
-  // Common country codes
-  const countryCodes = [
-    { code: '+91', country: 'India', flag: '🇮🇳' },
-    { code: '+1', country: 'USA/Canada', flag: '🇺🇸' },
-    { code: '+44', country: 'UK', flag: '🇬🇧' },
-    { code: '+61', country: 'Australia', flag: '🇦🇺' },
-    { code: '+49', country: 'Germany', flag: '🇩🇪' },
-    { code: '+33', country: 'France', flag: '🇫🇷' },
-    { code: '+81', country: 'Japan', flag: '🇯🇵' },
-    { code: '+86', country: 'China', flag: '🇨🇳' },
-    { code: '+971', country: 'UAE', flag: '🇦🇪' },
-    { code: '+65', country: 'Singapore', flag: '🇸🇬' },
-  ]
+  // Get country flag emoji based on country code
+  const getCountryFlag = (countryCode: string) => {
+    const flagMap: Record<string, string> = {
+      'IN': '🇮🇳', 'US': '🇺🇸', 'GB': '🇬🇧', 'AU': '🇦🇺', 'DE': '🇩🇪',
+      'FR': '🇫🇷', 'JP': '🇯🇵', 'CN': '🇨🇳', 'AE': '🇦🇪', 'SG': '🇸🇬',
+      'BR': '🇧🇷', 'RU': '🇷🇺', 'CA': '🇨🇦', 'IT': '🇮🇹', 'ES': '🇪🇸',
+      'NL': '🇳🇱', 'SE': '🇸🇪', 'NO': '🇳🇴', 'DK': '🇩🇰', 'FI': '🇫🇮'
+    }
+    return flagMap[countryCode] || '🌍'
+  }
 
   useEffect(() => {
     if (countdown > 0) {
@@ -83,16 +115,21 @@ export function MobileOTPStep({ onNext, onBack, buttonText = "Continue" }: Mobil
     setError('')
     
     try {
-      // For demo purposes, simulate OTP sending
       console.log('Sending OTP to:', fullMobileNumber)
       
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      const response = await otpApi.sendOTP({
+        mobileNumber: fullMobileNumber,
+        countryCode: countryCode
+      })
       
-      setOtpSent(true)
-      setCountdown(60)
-      setIsEditingMobile(false)
-      console.log('OTP sent successfully (demo)')
+      if (response.success) {
+        setOtpSent(true)
+        setCountdown(300) // 5 minutes
+        setIsEditingMobile(false)
+        console.log('OTP sent successfully')
+      } else {
+        setError(response.message || 'Failed to send OTP. Please try again.')
+      }
     } catch (error) {
       console.error('Error sending OTP:', error)
       setError('Failed to send OTP. Please try again.')
@@ -111,19 +148,20 @@ export function MobileOTPStep({ onNext, onBack, buttonText = "Continue" }: Mobil
     setError('')
 
     try {
-      // For demo purposes, accept any 6-digit OTP or "123456"
       console.log('Verifying OTP:', otp)
       
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      const response = await otpApi.verifyOTP({
+        mobileNumber: fullMobileNumber,
+        otp: otp
+      })
       
-      if (otp === '123456' || otp.length === 6) {
+      if (response.success && response.verified) {
         setMobileVerified(true)
         dispatch({ type: 'SET_MOBILE_VERIFIED', payload: true })
-        console.log('OTP verified successfully (demo)')
+        console.log('OTP verified successfully')
         // Don't call onNext() immediately, let user see the success state
       } else {
-        setError('Invalid OTP. Please try again.')
+        setError(response.message || 'Invalid OTP. Please try again.')
       }
     } catch (error) {
       console.error('Error verifying OTP:', error)
@@ -210,14 +248,23 @@ export function MobileOTPStep({ onNext, onBack, buttonText = "Continue" }: Mobil
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {countryCodes.map((country) => (
-                      <SelectItem key={country.code} value={country.code}>
+                    {loadingIsdCodes ? (
+                      <SelectItem value="loading" disabled>
                         <span className="flex items-center gap-2">
-                          <span>{country.flag}</span>
-                          <span>{country.code}</span>
+                          <LoadingSpinner fullscreen={false} />
+                          <span>Loading...</span>
                         </span>
                       </SelectItem>
-                    ))}
+                    ) : (
+                      isdCodes.map((isdCode) => (
+                        <SelectItem key={`+${isdCode.isdCode}`} value={`+${isdCode.isdCode}`}>
+                          <span className="flex items-center gap-2">
+                            <span>{getCountryFlag(isdCode.countryCode)}</span>
+                            <span>+{isdCode.isdCode}</span>
+                          </span>
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
                 <Input

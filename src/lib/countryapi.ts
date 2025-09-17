@@ -1,6 +1,8 @@
 import { Country, PaginatedResponse, PaginationParams } from "@/contexts/KYCAdminContext";
 import { api } from "./api";
 
+export type { Country };
+
 export const countryApi = {
   list: async (): Promise<Country[]> => {
     return api.get<Country[]>("countries");

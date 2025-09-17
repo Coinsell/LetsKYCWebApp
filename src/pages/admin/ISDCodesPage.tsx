@@ -12,9 +12,7 @@ import { Badge } from "../../components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
 import {
   useKYCAdmin,
-  KYCLevel,
-  KYCStatus,
-  TimeUnit,
+  ISDCode,
   PaginatedResponse,
   PaginationParams,
   FilterCondition,
@@ -22,14 +20,12 @@ import {
   SortCondition,
   SortOrder,
 } from "../../contexts/KYCAdminContext";
-import { Plus, Pencil, Trash2, Settings, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { kycLevelsApi } from "@/lib/kyclevelsapi";
+import { isdCodeApi } from "@/lib/isdcodeapi";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { getKycStatusDisplayText, getKycStatusColor } from "@/utils/kycStatusConverter";
-// import { KYCLevelModal } from "../../components/modals/KYCLevelModal";
 
-export function KYCLevelsPage() {
+export function ISDCodesPage() {
   const { state, dispatch } = useKYCAdmin();
   const navigate = useNavigate();
   
@@ -43,136 +39,104 @@ export function KYCLevelsPage() {
   
   // Filter and search state
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [sortField, setSortField] = useState('code');
+  const [countryFilter, setCountryFilter] = useState<string>('all');
+  const [sortField, setSortField] = useState('sequence');
   const [sortOrder, setSortOrder] = useState<SortOrder>(SortOrder.ASC);
   
   // Loading state
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingLevel, setEditingLevel] = useState<KYCLevel | null>(null);
+  const [editingISDCode, setEditingISDCode] = useState<ISDCode | null>(null);
+  const [error, setError] = useState<string | null>(null);
   
-  // Levels data
-  const [levels, setLevels] = useState<KYCLevel[]>([]);
+  // ISD Codes data
+  const [isdCodes, setIsdCodes] = useState<ISDCode[]>([]);
 
   // useEffect(() => {
-  //   loadLevels();
+  //   loadISDCodes();
   // }, []);
 
   useEffect(() => {
-    loadLevelsWithPagination();
-  }, [currentPage, pageSize, searchTerm, statusFilter, sortField, sortOrder]);
+    loadISDCodesWithPagination();
+  }, [currentPage, pageSize, searchTerm, countryFilter, sortField, sortOrder]);
 
-  const loadLevels = async () => {
+  const loadISDCodes = async () => {
     setLoading(true);
     try {
-      const levels = await kycLevelsApi.list();
-      dispatch({ type: "SET_KYC_LEVELS", payload: levels });
+      const isdCodes = await isdCodeApi.list();
+      dispatch({ type: "SET_ISD_CODES", payload: isdCodes });
     } catch (error) {
-      dispatch({ type: "SET_ERROR", payload: "Failed to fetch KYC levels" });
+      dispatch({ type: "SET_ERROR", payload: "Failed to fetch ISD codes" });
     } finally {
       setLoading(false);
     }
   };
 
-  const loadLevelsWithPagination = useCallback(async () => {
+  const loadISDCodesWithPagination = useCallback(async () => {
     setLoading(true);
     try {
-      // Build pagination parameters
-      const paginationParams: PaginationParams = {
-        page: currentPage,
-        page_size: pageSize,
-        fetch_all: false,
-        search: searchTerm || undefined,
-        sort_by: [
-          {
-            field: sortField,
-            order: sortOrder
-          }
-        ]
-      }
-
-      // Add status filter if not 'all'
-      if (statusFilter !== 'all') {
-        paginationParams.filters = [
-          {
-            field: 'status',
-            operator: FilterOperator.EQUALS,
-            value: statusFilter
-          }
-        ]
-      }
-
-      const response: PaginatedResponse<KYCLevel> = await kycLevelsApi.listEnhanced(paginationParams);
+      // Use the GET method like KYCLevelsPage
+      const response: PaginatedResponse<ISDCode> = await isdCodeApi.listEnhancedGet(
+        currentPage,
+        pageSize,
+        false, // fetch_all
+        searchTerm || undefined,
+        sortField,
+        sortOrder
+      );
       
-      setLevels(response.items);
+      setIsdCodes(response.items);
       setTotalPages(response.total_pages);
       setTotalCount(response.total_count);
       setHasNext(response.has_next);
       setHasPrevious(response.has_previous);
       
-    } catch (error) {
-      console.error('Error fetching KYC levels:', error);
-      dispatch({ type: 'SET_ERROR', payload: 'Failed to fetch KYC levels' });
+    } catch (error: any) {
+      console.error('Error fetching ISD codes:', error);
+      setError(error?.message || 'Failed to fetch ISD codes. The ISD codes endpoint is not available on the backend API.');
+      dispatch({ type: 'SET_ERROR', payload: error?.message || 'Failed to fetch ISD codes' });
     } finally {
       setLoading(false);
     }
-  }, [currentPage, pageSize, searchTerm, statusFilter, sortField, sortOrder, dispatch]);
-
-  const fetchKYCLevels = async () => {
-    dispatch({ type: "SET_LOADING", payload: true });
-    try {
-      const levels = await kycLevelsApi.list();
-      dispatch({ type: "SET_KYC_LEVELS", payload: levels });
-    } catch (error) {
-      console.error("Error fetching KYC levels:", error);
-      dispatch({ type: "SET_ERROR", payload: "Failed to fetch KYC levels" });
-    } finally {
-      dispatch({ type: "SET_LOADING", payload: false });
-    }
-  };
+  }, [currentPage, pageSize, searchTerm, countryFilter, sortField, sortOrder, dispatch]);
 
   const handleCreate = () => {
-    setEditingLevel(null);
-    // setIsModalOpen(true);
-    navigate("/admin/kyc-levels/new");
+    setEditingISDCode(null);
+    navigate("/admin/isd-codes/new");
   };
 
-  const handleEdit = (level: KYCLevel) => {
-    setEditingLevel(level);
-    // setIsModalOpen(true);
-    navigate(`/admin/kyc-levels/${level.id}`, { state: { level } });
+  const handleEdit = (isdCode: ISDCode) => {
+    setEditingISDCode(isdCode);
+    navigate(`/admin/isd-codes/${isdCode.id}`, { state: { isdCode } });
   };
 
   // Save (create or update)
-  const handleSave = async (level: Partial<KYCLevel>) => {
+  const handleSave = async (isdCode: Partial<ISDCode>) => {
     try {
-      if (editingLevel) {
-        const updated = await kycLevelsApi.update(editingLevel.id, {
-          ...editingLevel,
-          ...level,
-        });
-        dispatch({ type: "UPDATE_KYC_LEVEL", payload: updated });
+      if (editingISDCode) {
+        const updated = await isdCodeApi.updateById(editingISDCode.id!, {
+          ...editingISDCode,
+          ...isdCode,
+        }, editingISDCode.countryCode);
+        dispatch({ type: "UPDATE_ISD_CODE", payload: updated });
       } else {
-        const created = await kycLevelsApi.create(level);
-        dispatch({ type: "ADD_KYC_LEVEL", payload: created });
+        const created = await isdCodeApi.create(isdCode as ISDCode);
+        dispatch({ type: "ADD_ISD_CODE", payload: created });
       }
-      setIsModalOpen(false);
     } catch (error) {
-      dispatch({ type: "SET_ERROR", payload: "Failed to save KYC level" });
+      dispatch({ type: "SET_ERROR", payload: "Failed to save ISD code" });
     }
   };
 
   // Delete
-  const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this KYC level?")) {
+  const handleDelete = async (id: string, countryCode: string) => {
+    if (confirm("Are you sure you want to delete this ISD code?")) {
       try {
         setLoading(true);
-        await kycLevelsApi.deleteWithDetails(id);
-        dispatch({ type: "DELETE_KYC_LEVEL", payload: id });
-        loadLevelsWithPagination();
+        await isdCodeApi.deleteById(id, countryCode);
+        dispatch({ type: "DELETE_ISD_CODE", payload: id });
+        loadISDCodesWithPagination();
       } catch (error) {
-        dispatch({ type: "SET_ERROR", payload: "Failed to delete KYC level" });
+        dispatch({ type: "SET_ERROR", payload: "Failed to delete ISD code" });
       } finally {
         setLoading(false);
       }
@@ -194,8 +158,8 @@ export function KYCLevelsPage() {
     setCurrentPage(1); // Reset to first page when searching
   };
 
-  const handleStatusFilterChange = (value: string) => {
-    setStatusFilter(value);
+  const handleCountryFilterChange = (value: string) => {
+    setCountryFilter(value);
     setCurrentPage(1); // Reset to first page when filtering
   };
 
@@ -209,53 +173,20 @@ export function KYCLevelsPage() {
     setCurrentPage(1); // Reset to first page when changing sort order
   };
 
-  // const handleSave = async (level: Partial<KYCLevel>) => {
-  //   try {
-  //     if (editingLevel) {
-  //       // Update existing level
-  //       const updatedLevel = { ...editingLevel, ...level };
-  //       dispatch({ type: "UPDATE_KYC_LEVEL", payload: updatedLevel });
-  //     } else {
-  //       // Create new level
-  //       const newLevel: KYCLevel = {
-  //         id: Date.now().toString(),
-  //         kycLevelId: `kyc-level-${Date.now()}`,
-  //         ...level,
-  //       } as KYCLevel;
-  //       dispatch({ type: "ADD_KYC_LEVEL", payload: newLevel });
-  //     }
-  //     setIsModalOpen(false);
-  //   } catch (error) {
-  //     dispatch({ type: "SET_ERROR", payload: "Failed to save KYC level" });
-  //   }
-  // };
-
-
-  function formatCurrency(amount?: number | null) {
-    if (amount == null) return "N/A";
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-      maximumFractionDigits: 0,
-    }).format(amount);
-  }
-
-  // if (loading) return <LoadingSpinner />;
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
-            KYC Levels
+            ISD Codes
           </h1>
           <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
-            Manage KYC levels and their configurations
+            Manage International Subscriber Dialing codes
           </p>
         </div>
         <Button onClick={handleCreate} className="gap-2">
           <Plus className="h-4 w-4" />
-          Add KYC Level
+          Add ISD Code
         </Button>
       </div>
 
@@ -264,9 +195,9 @@ export function KYCLevelsPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>KYC Levels</CardTitle>
+                <CardTitle>ISD Codes</CardTitle>
                 <CardDescription>
-                  Configure different KYC levels for users
+                  Configure International Subscriber Dialing codes for different countries
                 </CardDescription>
               </div>
             </div>
@@ -277,22 +208,21 @@ export function KYCLevelsPage() {
               <div className="relative w-72">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
-                  placeholder="Search levels..."
+                  placeholder="Search ISD codes..."
                   value={searchTerm}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   className="pl-10"
                 />
               </div>
 
-              {/* Status Filter */}
-              <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Status" />
+              {/* Country Filter */}
+              <Select value={countryFilter} onValueChange={handleCountryFilterChange}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Country" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="Inactive">Inactive</SelectItem>
+                  <SelectItem value="all">All Countries</SelectItem>
+                  {/* Add country options dynamically */}
                 </SelectContent>
               </Select>
 
@@ -315,11 +245,10 @@ export function KYCLevelsPage() {
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="code">Code</SelectItem>
-                  <SelectItem value="description">Description</SelectItem>
-                  <SelectItem value="maxDepositAmount">Max Deposit</SelectItem>
-                  <SelectItem value="maxWithdrawalAmount">Max Withdrawal</SelectItem>
-                  <SelectItem value="duration">Duration</SelectItem>
+                  <SelectItem value="sequence">Sequence</SelectItem>
+                  <SelectItem value="isdCode">ISD Code</SelectItem>
+                  <SelectItem value="countryCode">Country Code</SelectItem>
+                  <SelectItem value="countryName">Country Name</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -336,74 +265,103 @@ export function KYCLevelsPage() {
 
             {/* Results Summary */}
             <div className="text-sm text-gray-600 dark:text-gray-400">
-              Showing {levels.length} of {totalCount} levels (Page {currentPage} of {totalPages})
+              Showing {isdCodes.length} of {totalCount} ISD codes (Page {currentPage} of {totalPages})
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          {loading ? (
+          {error ? (
+            <div className="text-center py-8">
+              <div className="text-orange-600 dark:text-orange-400 mb-6">
+                <h3 className="text-lg font-semibold mb-2">⚠️ Backend Endpoint Missing</h3>
+                <p className="text-sm mb-4">{error}</p>
+                <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg border border-orange-200 dark:border-orange-800">
+                  <p className="text-sm font-medium mb-2">To fix this issue:</p>
+                  <ol className="text-left text-sm space-y-1">
+                    <li>1. Deploy the updated backend with the <code>/isdcodes/</code> routes</li>
+                    <li>2. Or implement the ISDCode service and routes in the backend API</li>
+                  </ol>
+                </div>
+              </div>
+              <div className="flex gap-2 justify-center">
+                <Button 
+                  onClick={() => {
+                    setError(null);
+                    loadISDCodesWithPagination();
+                  }}
+                  variant="outline"
+                  size="sm"
+                >
+                  Retry
+                </Button>
+                <Button 
+                  onClick={() => window.open('https://letskycapi.agreeabledune-9ad96245.southeastasia.azurecontainerapps.io/docs', '_blank')}
+                  variant="outline"
+                  size="sm"
+                >
+                  View API Docs
+                </Button>
+              </div>
+            </div>
+          ) : loading ? (
             <LoadingSpinner fullscreen={false} />
           ) : (
             <>
               <div className="space-y-4">
-                {levels.map((level) => (
+                {isdCodes.map((isdCode) => (
                 <div
-                  key={level.id}
+                  key={isdCode.id}
                   className="flex items-center justify-between p-4 border border-neutral-200 dark:border-neutral-700 rounded-lg"
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-semibold text-lg">{level.code}</h3>
-                      <span
-                        className={`px-3 py-1 rounded-full text-sm font-medium ${getKycStatusColor(level.status)}`}
-                      >
-                        {getKycStatusDisplayText(level.status)}
-                      </span>
+                      <h3 className="font-semibold text-lg">{isdCode.countryName}</h3>
+                      <Badge variant="outline" className="text-sm">
+                        +{isdCode.isdCode}
+                      </Badge>
+                      <Badge variant="secondary" className="text-sm">
+                        {isdCode.countryCode}
+                      </Badge>
+                      <Badge variant="secondary" className="text-sm">
+                        {isdCode.countryCode2}
+                      </Badge>
                     </div>
-                    <p className="text-neutral-600 dark:text-neutral-400 mb-2">
-                      {level.description}
-                    </p>
                     <div className="flex gap-4 text-sm text-neutral-500">
                       <span>
-                        Max Deposit: {formatCurrency(level.maxDepositAmount)}
+                        <strong>Sequence:</strong> {isdCode.sequence}
                       </span>
                       <span>
-                        Max Withdrawal:{" "}
-                        {formatCurrency(level.maxWithdrawalAmount)}
+                        <strong>ISD Code:</strong> +{isdCode.isdCode}
                       </span>
                       <span>
-                        Duration: {level.duration} {level.timeUnit}
+                        <strong>Country Code:</strong> {isdCode.countryCode}
+                      </span>
+                      <span>
+                        <strong>Country Code 2:</strong> {isdCode.countryCode2}
                       </span>
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    {/* <Button
-                      variant="outline"
-                      size="sm"
-                      title="Manage KYC Details"
-                    >
-                      <Settings className="h-4 w-4" />
-                    </Button> */}
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleEdit(level)}
+                      onClick={() => handleEdit(isdCode)}
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleDelete(level.id)}
+                      onClick={() => handleDelete(isdCode.id!, isdCode.countryCode)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
               ))}
-                {levels.length === 0 && (
+                {isdCodes.length === 0 && (
                   <div className="text-center py-8">
-                    <p className="text-neutral-500">No KYC levels found</p>
+                    <p className="text-neutral-500">No ISD codes found</p>
                   </div>
                 )}
               </div>
@@ -457,13 +415,6 @@ export function KYCLevelsPage() {
           )}
         </CardContent>
       </Card>
-
-      {/* <KYCLevelModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleSave}
-        level={editingLevel}
-      /> */}
     </div>
   );
 }

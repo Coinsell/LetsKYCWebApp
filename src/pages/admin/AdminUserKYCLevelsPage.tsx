@@ -55,9 +55,9 @@ export function AdminUserKYCLevelsPage() {
   const [userKycLevels, setUserKycLevels] = useState<UserKYCLevel[]>([]);
   const userId = searchParams.get('userId');
 
-  useEffect(() => {
-    fetchUserKycLevels();
-  }, []);
+  // useEffect(() => {
+  //   fetchUserKycLevels();
+  // }, []);
 
   useEffect(() => {
     loadLevelsWithPagination();

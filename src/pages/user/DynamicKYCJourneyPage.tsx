@@ -38,6 +38,7 @@ import { LivenessStep } from "../../components/steps/LivenessStep";
 import { MobileOTPStep } from "../../components/steps/MobileOTPStep";
 import { PANVerificationStep } from "../../components/steps/PANVerificationStep";
 import { UserInfoStep } from "../../components/steps/UserInfoStep";
+import { OccupationProfessionStep } from "../../components/steps/OccupationProfessionStep";
 
 // ✅ Import the provider
 import { KYCProvider } from "../../contexts/KYCContext";
@@ -476,6 +477,17 @@ export function DynamicKYCJourneyPage() {
             }}
             onBack={isFirstStep ? undefined : () => setCurrentStep(prev => Math.max(prev - 1, 0))}
             buttonText={isLastStep ? "Complete" : "Continue to Review"}
+            {...props}
+          />
+        );
+      case KycDetailType.occupation:
+        return (
+          <OccupationProfessionStep
+            onNext={() => {
+              handleStepComplete(stepId);
+            }}
+            onBack={isFirstStep ? undefined : () => setCurrentStep(prev => Math.max(prev - 1, 0))}
+            buttonText={isLastStep ? "Complete" : "Continue"}
             {...props}
           />
         );

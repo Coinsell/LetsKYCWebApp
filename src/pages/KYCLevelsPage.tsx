@@ -54,9 +54,9 @@ export function KYCLevelsPage() {
   // Levels data
   const [levels, setLevels] = useState<KYCLevel[]>([]);
 
-  useEffect(() => {
-    loadLevels();
-  }, []);
+  // useEffect(() => {
+  //   loadLevels();
+  // }, []);
 
   useEffect(() => {
     loadLevelsWithPagination();

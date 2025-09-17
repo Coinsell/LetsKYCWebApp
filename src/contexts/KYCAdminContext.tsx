@@ -212,7 +212,12 @@ export interface PaginatedResponse<T> {
 
 export interface KYCAdminState {
   countries: Country[];
+  isdCodes: ISDCode[];
+  provinces: Province[];
+  cities: City[];
   assignments: CountryKycAssignment[];
+  occupations: OccupationProfession[];
+  professions: OccupationProfession[];
   kycLevels: KYCLevel[];
   kycDetails: KYCDetail[];
   users: User[];
@@ -232,6 +237,45 @@ export interface Country {
   isRegistrationRestricted: boolean;
 }
 
+// --------------------- ISD Code ---------------------
+export interface ISDCode {
+  id?: string;
+  sequence: number;
+  isdCode: number;
+  countryCode: string;
+  countryCode2: string;
+  countryName: string;
+  catchAll?: Record<string, any>;
+}
+
+// --------------------- Province ---------------------
+export interface Province {
+  id?: string;
+  sequence: number;
+  code: string;
+  name: string;
+  countryCode: string;
+  countryName: string;
+  subDivisionType: string;
+  isRegistrationRestricted: boolean;
+  catchAll?: Record<string, any>;
+}
+
+// --------------------- City ---------------------
+export interface City {
+  id?: string;
+  sequence: number;
+  code: string;
+  name: string;
+  countryCode: string;
+  countryName: string;
+  provinceCode?: string;
+  provinceName?: string;
+  cityType: string;
+  isRegistrationRestricted: boolean;
+  catchAll?: Record<string, any>;
+}
+
 // --------------------- Country KYC Assignment ---------------------
 export interface CountryKycAssignment {
   id: string;
@@ -240,17 +284,69 @@ export interface CountryKycAssignment {
   isActive: boolean;
 }
 
+// --------------------- Occupation & Profession ---------------------
+export interface OccupationProfession {
+  id?: string;
+  docType: 'Occupation' | 'Profession';
+  code: string;
+  name: string;
+  sequence: number;
+  isActive: boolean;
+  description?: string;
+  category?: string;
+  occupationCode?: string;
+  occupationName?: string;
+  jobTitle?: string;
+  jobLevel?: string;
+  requiredEducation?: string;
+  salaryRange?: Record<string, any>;
+  createdAt?: string;
+  updatedAt?: string;
+  catchAll?: Record<string, any>;
+}
+
+export interface OccupationWithProfessions {
+  occupation: OccupationProfession;
+  professions: OccupationProfession[];
+  totalProfessions: number;
+}
+
 type KYCAdminAction =
   // Countries
   | { type: "SET_COUNTRIES"; payload: Country[] }
   | { type: "ADD_COUNTRY"; payload: Country }
   | { type: "UPDATE_COUNTRY"; payload: Country }
   | { type: "DELETE_COUNTRY"; payload: string }
+  // ISD Codes
+  | { type: "SET_ISD_CODES"; payload: ISDCode[] }
+  | { type: "ADD_ISD_CODE"; payload: ISDCode }
+  | { type: "UPDATE_ISD_CODE"; payload: ISDCode }
+  | { type: "DELETE_ISD_CODE"; payload: string }
+  // Provinces
+  | { type: "SET_PROVINCES"; payload: Province[] }
+  | { type: "ADD_PROVINCE"; payload: Province }
+  | { type: "UPDATE_PROVINCE"; payload: Province }
+  | { type: "DELETE_PROVINCE"; payload: string }
+  // Cities
+  | { type: "SET_CITIES"; payload: City[] }
+  | { type: "ADD_CITY"; payload: City }
+  | { type: "UPDATE_CITY"; payload: City }
+  | { type: "DELETE_CITY"; payload: string }
   // Assignments
   | { type: "SET_ASSIGNMENTS"; payload: CountryKycAssignment[] }
   | { type: "ADD_ASSIGNMENT"; payload: CountryKycAssignment }
   | { type: "UPDATE_ASSIGNMENT"; payload: CountryKycAssignment }
   | { type: "DELETE_ASSIGNMENT"; payload: string }
+  // Occupations
+  | { type: "SET_OCCUPATIONS"; payload: OccupationProfession[] }
+  | { type: "ADD_OCCUPATION"; payload: OccupationProfession }
+  | { type: "UPDATE_OCCUPATION"; payload: OccupationProfession }
+  | { type: "DELETE_OCCUPATION"; payload: string }
+  // Professions
+  | { type: "SET_PROFESSIONS"; payload: OccupationProfession[] }
+  | { type: "ADD_PROFESSION"; payload: OccupationProfession }
+  | { type: "UPDATE_PROFESSION"; payload: OccupationProfession }
+  | { type: "DELETE_PROFESSION"; payload: string }
   | { type: "SET_LOADING"; payload: boolean }
   | { type: "SET_ERROR"; payload: string | null }
   | { type: "SET_KYC_LEVELS"; payload: KYCLevel[] }
@@ -286,7 +382,12 @@ const initialState: KYCAdminState = {
   loading: false,
   error: null,
   countries: [],
+  isdCodes: [],
+  provinces: [],
+  cities: [],
   assignments: [],
+  occupations: [],
+  professions: [],
 };
 
 function kycAdminReducer(
@@ -312,6 +413,60 @@ function kycAdminReducer(
         countries: state.countries.filter((c) => c.id !== action.payload),
       };
 
+    // ISD Codes
+    case "SET_ISD_CODES":
+      return { ...state, isdCodes: action.payload };
+    case "ADD_ISD_CODE":
+      return { ...state, isdCodes: [...state.isdCodes, action.payload] };
+    case "UPDATE_ISD_CODE":
+      return {
+        ...state,
+        isdCodes: state.isdCodes.map((i) =>
+          i.id === action.payload.id ? action.payload : i
+        ),
+      };
+    case "DELETE_ISD_CODE":
+      return {
+        ...state,
+        isdCodes: state.isdCodes.filter((i) => i.id !== action.payload),
+      };
+
+    // Provinces
+    case "SET_PROVINCES":
+      return { ...state, provinces: action.payload };
+    case "ADD_PROVINCE":
+      return { ...state, provinces: [...state.provinces, action.payload] };
+    case "UPDATE_PROVINCE":
+      return {
+        ...state,
+        provinces: state.provinces.map((p) =>
+          p.id === action.payload.id ? action.payload : p
+        ),
+      };
+    case "DELETE_PROVINCE":
+      return {
+        ...state,
+        provinces: state.provinces.filter((p) => p.id !== action.payload),
+      };
+
+    // Cities
+    case "SET_CITIES":
+      return { ...state, cities: action.payload };
+    case "ADD_CITY":
+      return { ...state, cities: [...state.cities, action.payload] };
+    case "UPDATE_CITY":
+      return {
+        ...state,
+        cities: state.cities.map((c) =>
+          c.id === action.payload.id ? action.payload : c
+        ),
+      };
+    case "DELETE_CITY":
+      return {
+        ...state,
+        cities: state.cities.filter((c) => c.id !== action.payload),
+      };
+
     // Assignments
     case "SET_ASSIGNMENTS":
       return { ...state, assignments: action.payload };
@@ -328,6 +483,42 @@ function kycAdminReducer(
       return {
         ...state,
         assignments: state.assignments.filter((a) => a.id !== action.payload),
+      };
+
+    // Occupations
+    case "SET_OCCUPATIONS":
+      return { ...state, occupations: action.payload };
+    case "ADD_OCCUPATION":
+      return { ...state, occupations: [...state.occupations, action.payload] };
+    case "UPDATE_OCCUPATION":
+      return {
+        ...state,
+        occupations: state.occupations.map((o) =>
+          o.id === action.payload.id ? action.payload : o
+        ),
+      };
+    case "DELETE_OCCUPATION":
+      return {
+        ...state,
+        occupations: state.occupations.filter((o) => o.id !== action.payload),
+      };
+
+    // Professions
+    case "SET_PROFESSIONS":
+      return { ...state, professions: action.payload };
+    case "ADD_PROFESSION":
+      return { ...state, professions: [...state.professions, action.payload] };
+    case "UPDATE_PROFESSION":
+      return {
+        ...state,
+        professions: state.professions.map((p) =>
+          p.id === action.payload.id ? action.payload : p
+        ),
+      };
+    case "DELETE_PROFESSION":
+      return {
+        ...state,
+        professions: state.professions.filter((p) => p.id !== action.payload),
       };
 
     case "SET_LOADING":

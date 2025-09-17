@@ -193,9 +193,9 @@ export function KYCCountryAssignmentsPage() {
   // Assignments data
   const [assignments, setAssignments] = useState<CountryKycAssignment[]>([]);
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  // useEffect(() => {
+  //   loadData();
+  // }, []);
 
   useEffect(() => {
     loadAssignments();

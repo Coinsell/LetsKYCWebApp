@@ -1,4 +1,5 @@
 import { createContext, useContext, useReducer, ReactNode } from 'react'
+import { OccupationProfession } from '../lib/occupationprofessionapi'
 
 export interface UserInfo {
   fullName: string
@@ -23,6 +24,8 @@ export interface KYCState {
   aadhaarData: any | null
   livenessVerified: boolean
   faceMatchScore: number | null
+  occupation: OccupationProfession | null
+  profession: OccupationProfession | null
   finalStatus: 'NotStarted' | 'InProgress' | 'PendingReview' | 'Verified' | 'Rejected'
   currentStep: number
 }
@@ -33,6 +36,8 @@ type KYCAction =
   | { type: 'SET_PAN_VERIFIED'; payload: { verified: boolean; nameMatch?: number } }
   | { type: 'SET_AADHAAR_VERIFIED'; payload: { verified: boolean; data?: any } }
   | { type: 'SET_LIVENESS_VERIFIED'; payload: { verified: boolean; faceMatchScore?: number } }
+  | { type: 'SET_OCCUPATION'; payload: OccupationProfession }
+  | { type: 'SET_PROFESSION'; payload: OccupationProfession }
   | { type: 'SET_FINAL_STATUS'; payload: KYCState['finalStatus'] }
   | { type: 'SET_KYC_ID'; payload: string }
   | { type: 'SET_CURRENT_STEP'; payload: number }
@@ -47,6 +52,8 @@ const initialState: KYCState = {
   aadhaarData: null,
   livenessVerified: false,
   faceMatchScore: null,
+  occupation: null,
+  profession: null,
   finalStatus: 'NotStarted',
   currentStep: 0
 }
@@ -75,6 +82,10 @@ function kycReducer(state: KYCState, action: KYCAction): KYCState {
         livenessVerified: action.payload.verified,
         faceMatchScore: action.payload.faceMatchScore || null
       }
+    case 'SET_OCCUPATION':
+      return { ...state, occupation: action.payload }
+    case 'SET_PROFESSION':
+      return { ...state, profession: action.payload }
     case 'SET_FINAL_STATUS':
       return { ...state, finalStatus: action.payload }
     case 'SET_KYC_ID':

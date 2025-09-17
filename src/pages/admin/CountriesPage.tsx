@@ -12,9 +12,7 @@ import { Badge } from "../../components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
 import {
   useKYCAdmin,
-  KYCLevel,
-  KYCStatus,
-  TimeUnit,
+  Country,
   PaginatedResponse,
   PaginationParams,
   FilterCondition,
@@ -22,14 +20,12 @@ import {
   SortCondition,
   SortOrder,
 } from "../../contexts/KYCAdminContext";
-import { Plus, Pencil, Trash2, Settings, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { kycLevelsApi } from "@/lib/kyclevelsapi";
+import { countryApi } from "@/lib/countryapi";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { getKycStatusDisplayText, getKycStatusColor } from "@/utils/kycStatusConverter";
-// import { KYCLevelModal } from "../../components/modals/KYCLevelModal";
 
-export function KYCLevelsPage() {
+export function CountriesPage() {
   const { state, dispatch } = useKYCAdmin();
   const navigate = useNavigate();
   
@@ -43,136 +39,102 @@ export function KYCLevelsPage() {
   
   // Filter and search state
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [sortField, setSortField] = useState('code');
+  const [restrictionFilter, setRestrictionFilter] = useState<string>('all');
+  const [sortField, setSortField] = useState('sequence');
   const [sortOrder, setSortOrder] = useState<SortOrder>(SortOrder.ASC);
   
   // Loading state
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingLevel, setEditingLevel] = useState<KYCLevel | null>(null);
+  const [editingCountry, setEditingCountry] = useState<Country | null>(null);
+  const [error, setError] = useState<string | null>(null);
   
-  // Levels data
-  const [levels, setLevels] = useState<KYCLevel[]>([]);
+  // Countries data
+  const [countries, setCountries] = useState<Country[]>([]);
 
   // useEffect(() => {
-  //   loadLevels();
+  //   loadCountries();
   // }, []);
 
   useEffect(() => {
-    loadLevelsWithPagination();
-  }, [currentPage, pageSize, searchTerm, statusFilter, sortField, sortOrder]);
+    loadCountriesWithPagination();
+  }, [currentPage, pageSize, searchTerm, restrictionFilter, sortField, sortOrder]);
 
-  const loadLevels = async () => {
+  const loadCountries = async () => {
     setLoading(true);
     try {
-      const levels = await kycLevelsApi.list();
-      dispatch({ type: "SET_KYC_LEVELS", payload: levels });
+      const countries = await countryApi.list();
+      dispatch({ type: "SET_COUNTRIES", payload: countries });
     } catch (error) {
-      dispatch({ type: "SET_ERROR", payload: "Failed to fetch KYC levels" });
+      dispatch({ type: "SET_ERROR", payload: "Failed to fetch countries" });
     } finally {
       setLoading(false);
     }
   };
 
-  const loadLevelsWithPagination = useCallback(async () => {
+  const loadCountriesWithPagination = useCallback(async () => {
     setLoading(true);
     try {
-      // Build pagination parameters
-      const paginationParams: PaginationParams = {
-        page: currentPage,
-        page_size: pageSize,
-        fetch_all: false,
-        search: searchTerm || undefined,
-        sort_by: [
-          {
-            field: sortField,
-            order: sortOrder
-          }
-        ]
-      }
-
-      // Add status filter if not 'all'
-      if (statusFilter !== 'all') {
-        paginationParams.filters = [
-          {
-            field: 'status',
-            operator: FilterOperator.EQUALS,
-            value: statusFilter
-          }
-        ]
-      }
-
-      const response: PaginatedResponse<KYCLevel> = await kycLevelsApi.listEnhanced(paginationParams);
+      // Use the GET method like KYCLevelsPage
+      const response: PaginatedResponse<Country> = await countryApi.listEnhancedGet(
+        currentPage,
+        pageSize,
+        false, // fetch_all
+        searchTerm || undefined,
+        sortField,
+        sortOrder
+      );
       
-      setLevels(response.items);
+      setCountries(response.items);
       setTotalPages(response.total_pages);
       setTotalCount(response.total_count);
       setHasNext(response.has_next);
       setHasPrevious(response.has_previous);
       
-    } catch (error) {
-      console.error('Error fetching KYC levels:', error);
-      dispatch({ type: 'SET_ERROR', payload: 'Failed to fetch KYC levels' });
+    } catch (error: any) {
+      console.error('Error fetching countries:', error);
+      setError(error?.message || 'Failed to fetch countries');
+      dispatch({ type: 'SET_ERROR', payload: error?.message || 'Failed to fetch countries' });
     } finally {
       setLoading(false);
     }
-  }, [currentPage, pageSize, searchTerm, statusFilter, sortField, sortOrder, dispatch]);
-
-  const fetchKYCLevels = async () => {
-    dispatch({ type: "SET_LOADING", payload: true });
-    try {
-      const levels = await kycLevelsApi.list();
-      dispatch({ type: "SET_KYC_LEVELS", payload: levels });
-    } catch (error) {
-      console.error("Error fetching KYC levels:", error);
-      dispatch({ type: "SET_ERROR", payload: "Failed to fetch KYC levels" });
-    } finally {
-      dispatch({ type: "SET_LOADING", payload: false });
-    }
-  };
+  }, [currentPage, pageSize, searchTerm, restrictionFilter, sortField, sortOrder, dispatch]);
 
   const handleCreate = () => {
-    setEditingLevel(null);
-    // setIsModalOpen(true);
-    navigate("/admin/kyc-levels/new");
+    navigate("/admin/countries/new");
   };
 
-  const handleEdit = (level: KYCLevel) => {
-    setEditingLevel(level);
-    // setIsModalOpen(true);
-    navigate(`/admin/kyc-levels/${level.id}`, { state: { level } });
+  const handleEdit = (country: Country) => {
+    navigate(`/admin/countries/${country.code}`);
   };
 
   // Save (create or update)
-  const handleSave = async (level: Partial<KYCLevel>) => {
+  const handleSave = async (country: Partial<Country>) => {
     try {
-      if (editingLevel) {
-        const updated = await kycLevelsApi.update(editingLevel.id, {
-          ...editingLevel,
-          ...level,
+      if (editingCountry) {
+        const updated = await countryApi.updateByCode(editingCountry.code, {
+          ...editingCountry,
+          ...country,
         });
-        dispatch({ type: "UPDATE_KYC_LEVEL", payload: updated });
+        dispatch({ type: "UPDATE_COUNTRY", payload: updated });
       } else {
-        const created = await kycLevelsApi.create(level);
-        dispatch({ type: "ADD_KYC_LEVEL", payload: created });
+        const created = await countryApi.create(country as Country);
+        dispatch({ type: "ADD_COUNTRY", payload: created });
       }
-      setIsModalOpen(false);
     } catch (error) {
-      dispatch({ type: "SET_ERROR", payload: "Failed to save KYC level" });
+      dispatch({ type: "SET_ERROR", payload: "Failed to save country" });
     }
   };
 
   // Delete
-  const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this KYC level?")) {
+  const handleDelete = async (code: string) => {
+    if (confirm("Are you sure you want to delete this country?")) {
       try {
         setLoading(true);
-        await kycLevelsApi.deleteWithDetails(id);
-        dispatch({ type: "DELETE_KYC_LEVEL", payload: id });
-        loadLevelsWithPagination();
+        await countryApi.deleteByCode(code);
+        dispatch({ type: "DELETE_COUNTRY", payload: code });
+        loadCountriesWithPagination();
       } catch (error) {
-        dispatch({ type: "SET_ERROR", payload: "Failed to delete KYC level" });
+        dispatch({ type: "SET_ERROR", payload: "Failed to delete country" });
       } finally {
         setLoading(false);
       }
@@ -194,8 +156,8 @@ export function KYCLevelsPage() {
     setCurrentPage(1); // Reset to first page when searching
   };
 
-  const handleStatusFilterChange = (value: string) => {
-    setStatusFilter(value);
+  const handleRestrictionFilterChange = (value: string) => {
+    setRestrictionFilter(value);
     setCurrentPage(1); // Reset to first page when filtering
   };
 
@@ -209,53 +171,20 @@ export function KYCLevelsPage() {
     setCurrentPage(1); // Reset to first page when changing sort order
   };
 
-  // const handleSave = async (level: Partial<KYCLevel>) => {
-  //   try {
-  //     if (editingLevel) {
-  //       // Update existing level
-  //       const updatedLevel = { ...editingLevel, ...level };
-  //       dispatch({ type: "UPDATE_KYC_LEVEL", payload: updatedLevel });
-  //     } else {
-  //       // Create new level
-  //       const newLevel: KYCLevel = {
-  //         id: Date.now().toString(),
-  //         kycLevelId: `kyc-level-${Date.now()}`,
-  //         ...level,
-  //       } as KYCLevel;
-  //       dispatch({ type: "ADD_KYC_LEVEL", payload: newLevel });
-  //     }
-  //     setIsModalOpen(false);
-  //   } catch (error) {
-  //     dispatch({ type: "SET_ERROR", payload: "Failed to save KYC level" });
-  //   }
-  // };
-
-
-  function formatCurrency(amount?: number | null) {
-    if (amount == null) return "N/A";
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-      maximumFractionDigits: 0,
-    }).format(amount);
-  }
-
-  // if (loading) return <LoadingSpinner />;
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
-            KYC Levels
+            Countries
           </h1>
           <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
-            Manage KYC levels and their configurations
+            Manage countries and their configurations
           </p>
         </div>
         <Button onClick={handleCreate} className="gap-2">
           <Plus className="h-4 w-4" />
-          Add KYC Level
+          Add Country
         </Button>
       </div>
 
@@ -264,9 +193,9 @@ export function KYCLevelsPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>KYC Levels</CardTitle>
+                <CardTitle>Countries</CardTitle>
                 <CardDescription>
-                  Configure different KYC levels for users
+                  Configure different countries for user registration
                 </CardDescription>
               </div>
             </div>
@@ -277,22 +206,22 @@ export function KYCLevelsPage() {
               <div className="relative w-72">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
-                  placeholder="Search levels..."
+                  placeholder="Search countries..."
                   value={searchTerm}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   className="pl-10"
                 />
               </div>
 
-              {/* Status Filter */}
-              <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Status" />
+              {/* Restriction Filter */}
+              <Select value={restrictionFilter} onValueChange={handleRestrictionFilterChange}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Registration Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="Inactive">Inactive</SelectItem>
+                  <SelectItem value="all">All Countries</SelectItem>
+                  <SelectItem value="restricted">Restricted</SelectItem>
+                  <SelectItem value="unrestricted">Unrestricted</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -315,11 +244,10 @@ export function KYCLevelsPage() {
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="sequence">Sequence</SelectItem>
                   <SelectItem value="code">Code</SelectItem>
-                  <SelectItem value="description">Description</SelectItem>
-                  <SelectItem value="maxDepositAmount">Max Deposit</SelectItem>
-                  <SelectItem value="maxWithdrawalAmount">Max Withdrawal</SelectItem>
-                  <SelectItem value="duration">Duration</SelectItem>
+                  <SelectItem value="name">Name</SelectItem>
+                  <SelectItem value="isRegistrationRestricted">Restriction</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -336,74 +264,83 @@ export function KYCLevelsPage() {
 
             {/* Results Summary */}
             <div className="text-sm text-gray-600 dark:text-gray-400">
-              Showing {levels.length} of {totalCount} levels (Page {currentPage} of {totalPages})
+              Showing {countries.length} of {totalCount} countries (Page {currentPage} of {totalPages})
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          {loading ? (
+          {error ? (
+            <div className="text-center py-8">
+              <div className="text-red-600 dark:text-red-400 mb-4">
+                <h3 className="text-lg font-semibold mb-2">Error Loading Countries</h3>
+                <p className="text-sm">{error}</p>
+              </div>
+              <Button 
+                onClick={() => {
+                  setError(null);
+                  loadCountriesWithPagination();
+                }}
+                variant="outline"
+              >
+                Retry
+              </Button>
+            </div>
+          ) : loading ? (
             <LoadingSpinner fullscreen={false} />
           ) : (
             <>
               <div className="space-y-4">
-                {levels.map((level) => (
+                {countries.map((country) => (
                 <div
-                  key={level.id}
+                  key={country.id}
                   className="flex items-center justify-between p-4 border border-neutral-200 dark:border-neutral-700 rounded-lg"
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-semibold text-lg">{level.code}</h3>
+                      <h3 className="font-semibold text-lg">{country.name}</h3>
+                      <Badge variant="outline" className="text-sm">
+                        {country.code}
+                      </Badge>
                       <span
-                        className={`px-3 py-1 rounded-full text-sm font-medium ${getKycStatusColor(level.status)}`}
+                        className={`px-3 py-1 rounded-full text-sm font-medium ${
+                          country.isRegistrationRestricted 
+                            ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' 
+                            : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                        }`}
                       >
-                        {getKycStatusDisplayText(level.status)}
+                        {country.isRegistrationRestricted ? 'Restricted' : 'Unrestricted'}
                       </span>
                     </div>
-                    <p className="text-neutral-600 dark:text-neutral-400 mb-2">
-                      {level.description}
-                    </p>
                     <div className="flex gap-4 text-sm text-neutral-500">
                       <span>
-                        Max Deposit: {formatCurrency(level.maxDepositAmount)}
+                        <strong>Sequence:</strong> {country.sequence}
                       </span>
                       <span>
-                        Max Withdrawal:{" "}
-                        {formatCurrency(level.maxWithdrawalAmount)}
-                      </span>
-                      <span>
-                        Duration: {level.duration} {level.timeUnit}
+                        <strong>Code:</strong> {country.code}
                       </span>
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    {/* <Button
-                      variant="outline"
-                      size="sm"
-                      title="Manage KYC Details"
-                    >
-                      <Settings className="h-4 w-4" />
-                    </Button> */}
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleEdit(level)}
+                      onClick={() => handleEdit(country)}
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleDelete(level.id)}
+                      onClick={() => handleDelete(country.code)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
               ))}
-                {levels.length === 0 && (
+                {countries.length === 0 && (
                   <div className="text-center py-8">
-                    <p className="text-neutral-500">No KYC levels found</p>
+                    <p className="text-neutral-500">No countries found</p>
                   </div>
                 )}
               </div>
@@ -457,13 +394,6 @@ export function KYCLevelsPage() {
           )}
         </CardContent>
       </Card>
-
-      {/* <KYCLevelModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleSave}
-        level={editingLevel}
-      /> */}
     </div>
   );
 }

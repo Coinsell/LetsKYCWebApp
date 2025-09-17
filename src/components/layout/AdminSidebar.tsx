@@ -11,6 +11,10 @@ import {
   FileText,
   X,
   Globe,
+  MapPin,
+  Phone,
+  Briefcase,
+  Building2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
@@ -36,6 +40,22 @@ const navigation = [
       { name: "KYC Levels", href: "/admin/kyc-levels", icon: ShieldCheck },
       { name: "KYC Details", href: "/admin/kyc-details", icon: IdCard },
       { name: "KYC Rules", href: "/admin/country-kyc-levels", icon: Globe },
+    ]
+  },
+  {
+    group: "Geographic Data",
+    items: [
+      { name: "Countries", href: "/admin/countries", icon: Globe },
+      { name: "Provinces", href: "/admin/provinces", icon: MapPin },
+      { name: "Cities", href: "/admin/cities", icon: Building2 },
+      { name: "ISD Codes", href: "/admin/isd-codes", icon: Phone },
+    ]
+  },
+  {
+    group: "Occupations & Professions",
+    items: [
+      { name: "Occupations", href: "/admin/occupations", icon: Briefcase },
+      { name: "Professions", href: "/admin/professions", icon: Users },
     ]
   },
   {

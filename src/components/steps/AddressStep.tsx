@@ -1,10 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { LoadingSpinner } from "../ui/loading-spinner";
+import { countryApi, Country } from "../../lib/countryapi";
+import { provinceApi, Province } from "../../lib/provinceapi";
+import { cityApi, City } from "../../lib/cityapi";
+import { useKYC } from "../../contexts/KYCContext";
 
 interface AddressStepProps {
   onNext: () => void;
@@ -15,6 +20,8 @@ interface AddressStepProps {
 
 export function AddressStep({ onNext, onBack, onComplete, buttonText = "Continue" }: AddressStepProps) {
   console.log('AddressStep props:', { onNext: !!onNext, onBack: !!onBack, onComplete: !!onComplete, buttonText });
+  const { state, dispatch } = useKYC();
+  
   const [formData, setFormData] = useState({
     addressLine1: "",
     addressLine2: "",
@@ -25,6 +32,99 @@ export function AddressStep({ onNext, onBack, onComplete, buttonText = "Continue
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [countries, setCountries] = useState<Country[]>([]);
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  const [cities, setCities] = useState<City[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingProvinces, setLoadingProvinces] = useState(false);
+  const [loadingCities, setLoadingCities] = useState(false);
+
+  // Load countries on component mount
+  useEffect(() => {
+    loadCountries();
+  }, []);
+
+  // Initialize form data from KYC context
+  useEffect(() => {
+    if (state.userInfo) {
+      setFormData({
+        addressLine1: state.userInfo.addressLine1 || "",
+        addressLine2: state.userInfo.addressLine2 || "",
+        city: state.userInfo.city || "",
+        state: state.userInfo.state || "",
+        postalCode: state.userInfo.pincode || "",
+        country: state.userInfo.country || "",
+      });
+    }
+  }, [state.userInfo]);
+
+  // Load provinces when country changes
+  useEffect(() => {
+    if (formData.country) {
+      loadProvinces(formData.country);
+    } else {
+      setProvinces([]);
+      setCities([]);
+    }
+  }, [formData.country]);
+
+  // Load cities when province changes
+  useEffect(() => {
+    if (formData.state && formData.country) {
+      loadCities(formData.country, formData.state);
+    } else {
+      setCities([]);
+    }
+  }, [formData.state, formData.country]);
+
+  const loadCountries = async () => {
+    try {
+      setLoading(true);
+      const countriesData = await countryApi.list();
+      setCountries(countriesData);
+    } catch (error) {
+      console.error('Error loading countries:', error);
+      // Fallback to common countries
+      setCountries([
+        { id: '1', sequence: 1, code: 'US', name: 'United States', isRegistrationRestricted: false },
+        { id: '2', sequence: 2, code: 'CA', name: 'Canada', isRegistrationRestricted: false },
+        { id: '3', sequence: 3, code: 'GB', name: 'United Kingdom', isRegistrationRestricted: false },
+        { id: '4', sequence: 4, code: 'AU', name: 'Australia', isRegistrationRestricted: false },
+        { id: '5', sequence: 5, code: 'IN', name: 'India', isRegistrationRestricted: false },
+        { id: '6', sequence: 6, code: 'DE', name: 'Germany', isRegistrationRestricted: false },
+        { id: '7', sequence: 7, code: 'FR', name: 'France', isRegistrationRestricted: false },
+        { id: '8', sequence: 8, code: 'JP', name: 'Japan', isRegistrationRestricted: false },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadProvinces = async (countryCode: string) => {
+    try {
+      setLoadingProvinces(true);
+      const provincesData = await provinceApi.getByCountry(countryCode);
+      setProvinces(provincesData);
+    } catch (error) {
+      console.error('Error loading provinces:', error);
+      setProvinces([]);
+    } finally {
+      setLoadingProvinces(false);
+    }
+  };
+
+  const loadCities = async (countryCode: string, provinceCode: string) => {
+    try {
+      setLoadingCities(true);
+      const citiesData = await cityApi.getByProvince(countryCode, provinceCode);
+      setCities(citiesData);
+    } catch (error) {
+      console.error('Error loading cities:', error);
+      setCities([]);
+    } finally {
+      setLoadingCities(false);
+    }
+  };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};

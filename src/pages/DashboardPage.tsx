@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Badge } from '../components/ui/badge'
 import { useKYCAdmin, KYCStatus } from '../contexts/KYCAdminContext'
 import { ShieldCheck, FileText, Users, ClipboardList } from 'lucide-react'
-import { getKycStatusDisplayText } from '../utils/kycStatusConverter'
+import { getKycStatusDisplayText, convertKycStatusToNumeric } from '../utils/kycStatusConverter'
 
 export function DashboardPage() {
   const { state } = useKYCAdmin()

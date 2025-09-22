@@ -1,4 +1,7 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://letskycapi.agreeabledune-9ad96245.southeastasia.azurecontainerapps.io';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://letskyc.whitewater-a437d539.southeastasia.azurecontainerapps.io';
+
+console.log("🔗 API Base URL:", API_BASE_URL);
+console.log("🔗 Environment VITE_API_BASE_URL:", import.meta.env.VITE_API_BASE_URL);
 
 export async function apiRequest<T>(
   method: string,
@@ -10,7 +13,10 @@ export async function apiRequest<T>(
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
   const fullUrl = `${baseUrl}${cleanPath}`;
   
-  // console.log(`API Request: ${method} ${fullUrl}`);
+  console.log(`🌐 API Request: ${method} ${fullUrl}`);
+  if (data) {
+    console.log(`📤 Request data:`, data);
+  }
   
   const response = await fetch(fullUrl, {
     method,
@@ -20,15 +26,20 @@ export async function apiRequest<T>(
     ...(data ? { body: JSON.stringify(data) } : {}),
   });
 
+  console.log(`📡 Response status: ${response.status} ${response.statusText}`);
+
   if (!response.ok) {
     const errText = await response.text();
+    console.log(`❌ API Error Response:`, errText);
     if (response.status === 404) {
       throw new Error(`Endpoint not found: ${fullUrl}. Please ensure the backend API is deployed with the latest routes.`);
     }
     throw new Error(`API error: ${response.status} – ${errText}`);
   }
 
-  return (await response.json()) as T;
+  const responseData = await response.json();
+  console.log(`✅ API Success Response:`, responseData);
+  return responseData as T;
 }
 
 export const api = {

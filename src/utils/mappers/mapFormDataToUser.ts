@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 import { UserInfo } from "../../contexts/KYCContext";
 import { KYCStatus, User as AdminUser } from "../../contexts/KYCAdminContext";
 import { User as AuthUser } from "../../contexts/AuthContext";
+import { convertKycStatusToNumeric } from "../kycStatusConverter";
 
 // Utility: split full name into first and last
 function splitName(fullName: string) {
@@ -25,7 +26,7 @@ export function mapFormDataToUser(
     lastName: lastName,
     login: authUser?.email || "",
     dateOfBirth: formData.dateOfBirth,
-    country: formData.country || "India",
+    country: formData.country === "India" ? "IN" : formData.country || "IN",
     contacts: {
       emails: [authUser?.email || ""],
       phoneNumbers: [
@@ -43,7 +44,7 @@ export function mapFormDataToUser(
           city: formData.city,
           state: formData.state,
           postalCode: formData.pincode,
-          country: formData.country || "India",
+          country: formData.country === "India" ? "IN" : formData.country || "IN",
           type: "home",
           isPrimary: true,
         },

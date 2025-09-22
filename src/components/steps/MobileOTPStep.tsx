@@ -17,7 +17,6 @@ interface MobileOTPStepProps {
 }
 
 export function MobileOTPStep({ onNext, onBack, buttonText = "Continue" }: MobileOTPStepProps) {
-  console.log('MobileOTPStep props:', { onNext: !!onNext, onBack: !!onBack, buttonText });
   const { state, dispatch } = useKYC()
   const [otp, setOtp] = useState('')
   const [otpSent, setOtpSent] = useState(false)
@@ -75,7 +74,8 @@ export function MobileOTPStep({ onNext, onBack, buttonText = "Continue" }: Mobil
         { sequence: 7, isdCode: 81, countryCode: 'JP', countryCode2: 'JPN', countryName: 'Japan' },
         { sequence: 8, isdCode: 61, countryCode: 'AU', countryCode2: 'AUS', countryName: 'Australia' },
         { sequence: 9, isdCode: 55, countryCode: 'BR', countryCode2: 'BRA', countryName: 'Brazil' },
-        { sequence: 10, isdCode: 7, countryCode: 'RU', countryCode2: 'RUS', countryName: 'Russia' }
+        { sequence: 10, isdCode: 7, countryCode: 'RU', countryCode2: 'RUS', countryName: 'Russia' },
+        { sequence: 11, isdCode: 599, countryCode: 'AN', countryCode2: 'ANT', countryName: 'Netherlands Antilles' }
       ])
     } finally {
       setLoadingIsdCodes(false)
@@ -90,12 +90,126 @@ export function MobileOTPStep({ onNext, onBack, buttonText = "Continue" }: Mobil
   // Get country flag emoji based on country code
   const getCountryFlag = (countryCode: string) => {
     const flagMap: Record<string, string> = {
-      'IN': '🇮🇳', 'US': '🇺🇸', 'GB': '🇬🇧', 'AU': '🇦🇺', 'DE': '🇩🇪',
-      'FR': '🇫🇷', 'JP': '🇯🇵', 'CN': '🇨🇳', 'AE': '🇦🇪', 'SG': '🇸🇬',
-      'BR': '🇧🇷', 'RU': '🇷🇺', 'CA': '🇨🇦', 'IT': '🇮🇹', 'ES': '🇪🇸',
-      'NL': '🇳🇱', 'SE': '🇸🇪', 'NO': '🇳🇴', 'DK': '🇩🇰', 'FI': '🇫🇮'
+      // Complete country coverage - A
+      'AD': '🇦🇩', 'AE': '🇦🇪', 'AF': '🇦🇫', 'AG': '🇦🇬', 'AI': '🇦🇮',
+      'AL': '🇦🇱', 'AM': '🇦🇲', 'AO': '🇦🇴', 'AQ': '🇦🇶', 'AR': '🇦🇷',
+      'AS': '🇦🇸', 'AT': '🇦🇹', 'AU': '🇦🇺', 'AW': '🇦🇼', 'AX': '🇦🇽',
+      'AZ': '🇦🇿',
+      
+      // B
+      'BA': '🇧🇦', 'BB': '🇧🇧', 'BD': '🇧🇩', 'BE': '🇧🇪', 'BF': '🇧🇫',
+      'BG': '🇧🇬', 'BH': '🇧🇭', 'BI': '🇧🇮', 'BJ': '🇧🇯', 'BL': '🇧🇱',
+      'BM': '🇧🇲', 'BN': '🇧🇳', 'BO': '🇧🇴', 'BQ': '🇧🇶', 'BR': '🇧🇷',
+      'BS': '🇧🇸', 'BT': '🇧🇹', 'BV': '🇧🇻', 'BW': '🇧🇼', 'BY': '🇧🇾',
+      'BZ': '🇧🇿',
+      
+      // C
+      'CA': '🇨🇦', 'CC': '🇨🇨', 'CD': '🇨🇩', 'CF': '🇨🇫', 'CG': '🇨🇬',
+      'CH': '🇨🇭', 'CI': '🇨🇮', 'CK': '🇨🇰', 'CL': '🇨🇱', 'CM': '🇨🇲',
+      'CN': '🇨🇳', 'CO': '🇨🇴', 'CR': '🇨🇷', 'CU': '🇨🇺', 'CV': '🇨🇻',
+      'CW': '🇨🇼', 'CX': '🇨🇽', 'CY': '🇨🇾', 'CZ': '🇨🇿',
+      
+      // D
+      'DE': '🇩🇪', 'DJ': '🇩🇯', 'DK': '🇩🇰', 'DM': '🇩🇲', 'DO': '🇩🇴',
+      'DZ': '🇩🇿',
+      
+      // E
+      'EC': '🇪🇨', 'EE': '🇪🇪', 'EG': '🇪🇬', 'EH': '🇪🇭', 'ER': '🇪🇷',
+      'ES': '🇪🇸', 'ET': '🇪🇹',
+      
+      // F
+      'FI': '🇫🇮', 'FJ': '🇫🇯', 'FK': '🇫🇰', 'FM': '🇫🇲', 'FO': '🇫🇴',
+      'FR': '🇫🇷',
+      
+      // G
+      'GA': '🇬🇦', 'GB': '🇬🇧', 'GD': '🇬🇩', 'GE': '🇬🇪', 'GF': '🇬🇫',
+      'GG': '🇬🇬', 'GH': '🇬🇭', 'GI': '🇬🇮', 'GL': '🇬🇱', 'GM': '🇬🇲',
+      'GN': '🇬🇳', 'GP': '🇬🇵', 'GQ': '🇬🇶', 'GR': '🇬🇷', 'GS': '🇬🇸',
+      'GT': '🇬🇹', 'GU': '🇬🇺', 'GW': '🇬🇼', 'GY': '🇬🇾',
+      
+      // H
+      'HK': '🇭🇰', 'HM': '🇭🇲', 'HN': '🇭🇳', 'HR': '🇭🇷', 'HT': '🇭🇹',
+      'HU': '🇭🇺',
+      
+      // I
+      'ID': '🇮🇩', 'IE': '🇮🇪', 'IL': '🇮🇱', 'IM': '🇮🇲', 'IN': '🇮🇳',
+      'IO': '🇮🇴', 'IQ': '🇮🇶', 'IR': '🇮🇷', 'IS': '🇮🇸', 'IT': '🇮🇹',
+      
+      // J
+      'JE': '🇯🇪', 'JM': '🇯🇲', 'JO': '🇯🇴', 'JP': '🇯🇵',
+      
+      // K
+      'KE': '🇰🇪', 'KG': '🇰🇬', 'KH': '🇰🇭', 'KI': '🇰🇮', 'KM': '🇰🇲',
+      'KN': '🇰🇳', 'KP': '🇰🇵', 'KR': '🇰🇷', 'KW': '🇰🇼', 'KY': '🇰🇾',
+      'KZ': '🇰🇿',
+      
+      // L
+      'LA': '🇱🇦', 'LB': '🇱🇧', 'LC': '🇱🇨', 'LI': '🇱🇮', 'LK': '🇱🇰',
+      'LR': '🇱🇷', 'LS': '🇱🇸', 'LT': '🇱🇹', 'LU': '🇱🇺', 'LV': '🇱🇻',
+      'LY': '🇱🇾',
+      
+      // M
+      'MA': '🇲🇦', 'MC': '🇲🇨', 'MD': '🇲🇩', 'ME': '🇲🇪', 'MF': '🇲🇫',
+      'MG': '🇲🇬', 'MH': '🇲🇭', 'MK': '🇲🇰', 'ML': '🇲🇱', 'MM': '🇲🇲',
+      'MN': '🇲🇳', 'MO': '🇲🇴', 'MP': '🇲🇵', 'MQ': '🇲🇶', 'MR': '🇲🇷',
+      'MS': '🇲🇸', 'MT': '🇲🇹', 'MU': '🇲🇺', 'MV': '🇲🇻', 'MW': '🇲🇼',
+      'MX': '🇲🇽', 'MY': '🇲🇾', 'MZ': '🇲🇿',
+      
+      // N
+      'NA': '🇳🇦', 'NC': '🇳🇨', 'NE': '🇳🇪', 'NF': '🇳🇫', 'NG': '🇳🇬',
+      'NI': '🇳🇮', 'NL': '🇳🇱', 'NO': '🇳🇴', 'NP': '🇳🇵', 'NR': '🇳🇷',
+      'NU': '🇳🇺', 'NZ': '🇳🇿',
+      
+      // O
+      'OM': '🇴🇲',
+      
+      // P
+      'PA': '🇵🇦', 'PE': '🇵🇪', 'PF': '🇵🇫', 'PG': '🇵🇬', 'PH': '🇵🇭',
+      'PK': '🇵🇰', 'PL': '🇵🇱', 'PM': '🇵🇲', 'PN': '🇵🇳', 'PR': '🇵🇷',
+      'PS': '🇵🇸', 'PT': '🇵🇹', 'PW': '🇵🇼', 'PY': '🇵🇾',
+      
+      // Q
+      'QA': '🇶🇦',
+      
+      // R
+      'RE': '🇷🇪', 'RO': '🇷🇴', 'RS': '🇷🇸', 'RU': '🇷🇺', 'RW': '🇷🇼',
+      
+      // S
+      'SA': '🇸🇦', 'SB': '🇸🇧', 'SC': '🇸🇨', 'SD': '🇸🇩', 'SE': '🇸🇪',
+      'SG': '🇸🇬', 'SH': '🇸🇭', 'SI': '🇸🇮', 'SJ': '🇸🇯', 'SK': '🇸🇰',
+      'SL': '🇸🇱', 'SM': '🇸🇲', 'SN': '🇸🇳', 'SO': '🇸🇴', 'SR': '🇸🇷',
+      'SS': '🇸🇸', 'ST': '🇸🇹', 'SV': '🇸🇻', 'SX': '🇸🇽', 'SY': '🇸🇾',
+      'SZ': '🇸🇿',
+      
+      // T
+      'TC': '🇹🇨', 'TD': '🇹🇩', 'TF': '🇹🇫', 'TG': '🇹🇬', 'TH': '🇹🇭',
+      'TJ': '🇹🇯', 'TK': '🇹🇰', 'TL': '🇹🇱', 'TM': '🇹🇲', 'TN': '🇹🇳',
+      'TO': '🇹🇴', 'TR': '🇹🇷', 'TT': '🇹🇹', 'TV': '🇹🇻', 'TW': '🇹🇼',
+      'TZ': '🇹🇿',
+      
+      // U
+      'UA': '🇺🇦', 'UG': '🇺🇬', 'UM': '🇺🇲', 'US': '🇺🇸', 'UY': '🇺🇾',
+      'UZ': '🇺🇿',
+      
+      // V
+      'VA': '🇻🇦', 'VC': '🇻🇨', 'VE': '🇻🇪', 'VG': '🇻🇬', 'VI': '🇻🇮',
+      'VN': '🇻🇳', 'VU': '🇻🇺',
+      
+      // W
+      'WF': '🇼🇫', 'WS': '🇼🇸',
+      
+      // X
+      'XK': '🇽🇰',
+      
+      // Y
+      'YE': '🇾🇪', 'YT': '🇾🇹',
+      
+      // Z
+      'ZA': '🇿🇦', 'ZM': '🇿🇲', 'ZW': '🇿🇼'
     }
-    return flagMap[countryCode] || '🌍'
+    
+    const flag = flagMap[countryCode] || '🌍'
+    return flag
   }
 
   useEffect(() => {
@@ -115,21 +229,16 @@ export function MobileOTPStep({ onNext, onBack, buttonText = "Continue" }: Mobil
     setError('')
     
     try {
-      console.log('Sending OTP to:', fullMobileNumber)
+      // Temporary dummy OTP sending - simulate success
+      console.log('Dummy OTP sent to:', fullMobileNumber)
       
-      const response = await otpApi.sendOTP({
-        mobileNumber: fullMobileNumber,
-        countryCode: countryCode
-      })
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000))
       
-      if (response.success) {
-        setOtpSent(true)
-        setCountdown(300) // 5 minutes
-        setIsEditingMobile(false)
-        console.log('OTP sent successfully')
-      } else {
-        setError(response.message || 'Failed to send OTP. Please try again.')
-      }
+      setOtpSent(true)
+      setCountdown(300) // 5 minutes
+      setIsEditingMobile(false)
+      console.log('Dummy OTP sent successfully - use code: 123456')
     } catch (error) {
       console.error('Error sending OTP:', error)
       setError('Failed to send OTP. Please try again.')
@@ -148,20 +257,16 @@ export function MobileOTPStep({ onNext, onBack, buttonText = "Continue" }: Mobil
     setError('')
 
     try {
-      console.log('Verifying OTP:', otp)
+      // Temporary dummy OTP verification - accept any 6-digit code
+      const dummyOTP = '123456'
       
-      const response = await otpApi.verifyOTP({
-        mobileNumber: fullMobileNumber,
-        otp: otp
-      })
-      
-      if (response.success && response.verified) {
+      if (otp === dummyOTP) {
         setMobileVerified(true)
         dispatch({ type: 'SET_MOBILE_VERIFIED', payload: true })
-        console.log('OTP verified successfully')
+        console.log('Dummy OTP verified successfully - using code: 123456')
         // Don't call onNext() immediately, let user see the success state
       } else {
-        setError(response.message || 'Invalid OTP. Please try again.')
+        setError('Invalid OTP. Please use dummy code: 123456')
       }
     } catch (error) {
       console.error('Error verifying OTP:', error)
@@ -191,7 +296,6 @@ export function MobileOTPStep({ onNext, onBack, buttonText = "Continue" }: Mobil
               </Button>
             )}
             <Button onClick={() => {
-              console.log('Mobile verification completed, proceeding to next step');
               onNext();
             }} className={!onBack ? "ml-auto" : ""}>
               {buttonText}
@@ -215,7 +319,7 @@ export function MobileOTPStep({ onNext, onBack, buttonText = "Continue" }: Mobil
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Mobile Number Input or Display */}
-        {!isEditingMobile && mobileNumber ? (
+        {!isEditingMobile && mobileNumber && mobileNumber.length >= 10 ? (
           <div className="bg-secondary-2 p-4 rounded-lg border">
             <div className="flex items-center justify-between">
               <div>
@@ -256,8 +360,8 @@ export function MobileOTPStep({ onNext, onBack, buttonText = "Continue" }: Mobil
                         </span>
                       </SelectItem>
                     ) : (
-                      isdCodes.map((isdCode) => (
-                        <SelectItem key={`+${isdCode.isdCode}`} value={`+${isdCode.isdCode}`}>
+                      isdCodes.map((isdCode, index) => (
+                        <SelectItem key={`${isdCode.countryCode}-${isdCode.isdCode}-${index}`} value={`+${isdCode.isdCode}`}>
                           <span className="flex items-center gap-2">
                             <span>{getCountryFlag(isdCode.countryCode)}</span>
                             <span>+{isdCode.isdCode}</span>
@@ -272,7 +376,7 @@ export function MobileOTPStep({ onNext, onBack, buttonText = "Continue" }: Mobil
                   onChange={(e) => {
                     const value = e.target.value.replace(/\D/g, '')
                     setMobileNumber(value)
-                    setError('')
+                    if (error) setError('')
                   }}
                   placeholder="Enter mobile number"
                   className="flex-1"
@@ -318,9 +422,11 @@ export function MobileOTPStep({ onNext, onBack, buttonText = "Continue" }: Mobil
                 disabled={loading}
               />
               {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
-              <p className="text-xs text-neutral-500 mt-1">
-                For demo purposes, use any 6-digit number (e.g., 123456)
-              </p>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-2">
+                <p className="text-sm text-blue-800 font-medium">
+                  🧪 Development Mode: Use dummy OTP code <strong>123456</strong>
+                </p>
+              </div>
             </div>
 
             <div className="flex items-center justify-between text-sm">

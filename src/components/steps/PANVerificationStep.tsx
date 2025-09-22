@@ -19,50 +19,41 @@ export function PANVerificationStep({ onNext, onBack, buttonText = "Continue" }:
   const [error, setError] = useState('')
 
   const verifyPAN = async () => {
+    if (!state.userInfo?.pan) {
+      setError('PAN number is required for verification')
+      return
+    }
+
     setLoading(true)
     setError('')
 
     try {
-      const response = await fetch('/api/pan/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          kycId: state.kycId,
-          pan: state.userInfo?.pan
-        })
-      })
+      // For demo purposes, simulate PAN verification
+      console.log('🔍 Verifying PAN:', state.userInfo.pan)
       
-      if (response.ok) {
-        const data = await response.json()
-        setPanData(data)
-        
-        // Calculate fuzzy match score (simulated)
-        const score = calculateNameMatch(state.userInfo?.fullName || '', data.nameOnPan)
-        setNameMatchScore(score)
-        
-        dispatch({ 
-          type: 'SET_PAN_VERIFIED', 
-          payload: { verified: data.valid, nameMatch: score }
-        })
-      } else {
-        setError('PAN verification failed. Please check your PAN number.')
-      }
-    } catch (error) {
-      // For demo purposes, simulate success
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
       const mockData = {
         valid: true,
-        nameOnPan: state.userInfo?.fullName || 'DEMO USER',
-        statusCode: 'E'
+        nameOnPan: state.userInfo.fullName || 'DEMO USER',
+        statusCode: 'E',
+        panNumber: state.userInfo.pan
       }
       setPanData(mockData)
       
-      const score = calculateNameMatch(state.userInfo?.fullName || '', mockData.nameOnPan)
+      const score = calculateNameMatch(state.userInfo.fullName || '', mockData.nameOnPan)
       setNameMatchScore(score)
+      
+      console.log('✅ PAN verification successful:', { score, nameMatch: mockData.nameOnPan })
       
       dispatch({ 
         type: 'SET_PAN_VERIFIED', 
         payload: { verified: true, nameMatch: score }
       })
+    } catch (error) {
+      console.error('❌ PAN verification failed:', error)
+      setError('PAN verification failed. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -191,6 +182,12 @@ export function PANVerificationStep({ onNext, onBack, buttonText = "Continue" }:
             <li>• Name matching with PAN records</li>
             <li>• PAN status (active/inactive)</li>
           </ul>
+        </div>
+
+        <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+          <p className="text-sm text-yellow-800 font-medium">
+            🧪 Development Mode: PAN verification is simulated for testing
+          </p>
         </div>
 
         <div className="text-center">

@@ -25,6 +25,23 @@ export function convertKycStatus(status: string | number): KYCStatus {
 }
 
 /**
+ * Converts string KYC status enum values to numeric values for API calls
+ * This handles the case where frontend sends string values that need to be converted to numbers
+ */
+export function convertKycStatusToNumeric(status: KYCStatus): number {
+  const statusMap: Record<KYCStatus, number> = {
+    [KYCStatus.NotSubmitted]: 0,
+    [KYCStatus.InProgress]: 1,
+    [KYCStatus.Submitted]: 2,
+    [KYCStatus.UnderReview]: 3,
+    [KYCStatus.Approved]: 4,
+    [KYCStatus.Rejected]: 5,
+  };
+
+  return statusMap[status] || 0;
+}
+
+/**
  * Converts a user object's kycStatus field from numeric to string if needed
  */
 export function convertUserKycStatus(user: any): any {
